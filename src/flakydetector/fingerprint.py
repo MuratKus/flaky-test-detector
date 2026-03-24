@@ -18,6 +18,12 @@ _NORMALIZERS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"line \d+"), "line _"),
     # Memory addresses: 0x7fff5fbff8a0 → 0x_
     (re.compile(r"0x[0-9a-fA-F]+"), "0x_"),
+    # JavaScript/TypeScript line:column: file.js:42:18 → file.js:_:_
+    (re.compile(r"(\.(?:js|ts|jsx|tsx|mjs|cjs)):\d+:\d+"), r"\1:_:_"),
+    # Go source line offsets: +0x1a2 → +0x_
+    (re.compile(r"\+0x[0-9a-fA-F]+"), "+0x_"),
+    # Go goroutine IDs: goroutine 47 → goroutine _
+    (re.compile(r"goroutine \d+"), "goroutine _"),
     # Thread IDs/names: Thread-42, pool-3-thread-1
     (re.compile(r"Thread-\d+"), "Thread-_"),
     (re.compile(r"pool-\d+-thread-\d+"), "pool-_-thread-_"),
