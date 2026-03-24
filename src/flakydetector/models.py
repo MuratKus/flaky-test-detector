@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class TestOutcome(Enum):
@@ -20,11 +19,11 @@ class TestResult:
     classname: str  # com.example.LoginTest
     outcome: TestOutcome
     duration_sec: float = 0.0
-    error_message: Optional[str] = None
-    stacktrace: Optional[str] = None
-    fingerprint: Optional[str] = None  # set after fingerprinting
+    error_message: str | None = None
+    stacktrace: str | None = None
+    fingerprint: str | None = None  # set after fingerprinting
     suite: str = ""  # grouping (file, suite name, etc.)
-    timestamp: Optional[str] = None
+    timestamp: str | None = None
 
     @property
     def fqn(self) -> str:
@@ -71,5 +70,5 @@ class FlakyTest:
     fail_count: int
     flakiness_rate: float  # 0.0 to 1.0 — closer to 0.5 = more flaky
     failure_fingerprints: list[str] = field(default_factory=list)
-    last_seen: Optional[str] = None
+    last_seen: str | None = None
     recommended_action: str = ""  # "quarantine", "investigate", "stable"

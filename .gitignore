@@ -7,3 +7,5 @@ build/
 .flaky-detector.db
 *.db
 .venv/
+.ruff_cache/
+.DS_Store

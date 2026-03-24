@@ -15,7 +15,7 @@ _NORMALIZERS: list[tuple[re.Pattern, str]] = [
     # Java/Kotlin line numbers: ClassName.java:42 → ClassName.java:_
     (re.compile(r"(\.(?:java|kt|scala|groovy)):\d+"), r"\1:_"),
     # Python line numbers: File "foo.py", line 42 → File "foo.py", line _
-    (re.compile(r'line \d+'), "line _"),
+    (re.compile(r"line \d+"), "line _"),
     # Memory addresses: 0x7fff5fbff8a0 → 0x_
     (re.compile(r"0x[0-9a-fA-F]+"), "0x_"),
     # Thread IDs/names: Thread-42, pool-3-thread-1

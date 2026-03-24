@@ -45,34 +45,32 @@ def analyze(store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION) -> list[FlakyT
             continue
 
         # Collect distinct failure fingerprints
-        fingerprints = list({
-            h["fingerprint"]
-            for h in history
-            if h["fingerprint"] and h["outcome"] != "passed"
-        })
+        fingerprints = list(
+            {h["fingerprint"] for h in history if h["fingerprint"] and h["outcome"] != "passed"}
+        )
 
         # Determine recommended action
         action = _recommend_action(flakiness, total, fingerprints)
 
-        flaky_tests.append(FlakyTest(
-            test_name=name,
-            total_runs=total,
-            pass_count=passes,
-            fail_count=fails,
-            flakiness_rate=round(flakiness, 3),
-            failure_fingerprints=fingerprints,
-            last_seen=history[0].get("ingested_at", ""),
-            recommended_action=action,
-        ))
+        flaky_tests.append(
+            FlakyTest(
+                test_name=name,
+                total_runs=total,
+                pass_count=passes,
+                fail_count=fails,
+                flakiness_rate=round(flakiness, 3),
+                failure_fingerprints=fingerprints,
+                last_seen=history[0].get("ingested_at", ""),
+                recommended_action=action,
+            )
+        )
 
     # Sort by flakiness rate descending (worst offenders first)
     flaky_tests.sort(key=lambda t: t.flakiness_rate, reverse=True)
     return flaky_tests
 
 
-def _recommend_action(
-    flakiness: float, total_runs: int, fingerprints: list[str]
-) -> str:
+def _recommend_action(flakiness: float, total_runs: int, fingerprints: list[str]) -> str:
     """Suggest what to do about a flaky test."""
     if flakiness >= 0.8:
         return "quarantine"  # extremely flaky, remove from blocking gates

@@ -57,7 +57,6 @@ _STATUS_NORM = {
 
 
 class PlainLogParser(BaseParser):
-
     def can_parse(self, path: Path) -> bool:
         if not path.is_file():
             return False
@@ -95,24 +94,24 @@ class PlainLogParser(BaseParser):
             # Fall back: try to at least extract failures with stacktraces
             for trace in all_traces:
                 first_line = trace.strip().split("\n")[0]
-                summary.add(TestResult(
-                    name=first_line[:120],
-                    classname="unknown",
-                    outcome=TestOutcome.FAILED,
-                    stacktrace=trace,
-                ))
+                summary.add(
+                    TestResult(
+                        name=first_line[:120],
+                        classname="unknown",
+                        outcome=TestOutcome.FAILED,
+                        stacktrace=trace,
+                    )
+                )
 
         return summary
 
-    def _match_to_result(
-        self, m: re.Match, fmt: str, traces: list[str]
-    ) -> TestResult:
+    def _match_to_result(self, m: re.Match, fmt: str, traces: list[str]) -> TestResult:
         groups = m.groupdict()
         name = groups.get("n", groups.get("name", "unknown"))
         classname = groups.get("class", groups.get("path", ""))
         raw_status = groups.get("status", "").lower()
 
-        outcome = _STATUS_NORM.get(raw_status, None)
+        outcome = _STATUS_NORM.get(raw_status)
         if outcome is None:
             # Try without trailing "ed" — e.g. "passed" → "pass"
             outcome = _STATUS_NORM.get(raw_status.removesuffix("ed"), TestOutcome.FAILED)

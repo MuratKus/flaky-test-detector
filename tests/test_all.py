@@ -4,8 +4,6 @@ import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from flakydetector.analyzer import analyze
 from flakydetector.fingerprint import fingerprint, fingerprint_results, normalize_stacktrace
 from flakydetector.models import RunSummary, TestOutcome, TestResult
@@ -19,6 +17,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 # ── JUnit XML Parser ──────────────────────────────────────────────
+
 
 class TestJUnitXMLParser:
     def test_can_parse_valid_xml(self):
@@ -55,6 +54,7 @@ class TestJUnitXMLParser:
 
 # ── Allure JSON Parser ────────────────────────────────────────────
 
+
 class TestAllureJSONParser:
     def test_can_parse_allure_file(self):
         parser = AllureJSONParser()
@@ -67,6 +67,7 @@ class TestAllureJSONParser:
         assert summary.failed == 1
         r = summary.results[0]
         assert r.name == "testSearchResults"
+        assert r.error_message is not None
         assert "Expected 10 results" in r.error_message
 
     def test_can_parse_rejects_non_allure_json(self):
@@ -79,6 +80,7 @@ class TestAllureJSONParser:
 
 
 # ── Plain Log Parser ──────────────────────────────────────────────
+
 
 class TestPlainLogParser:
     def test_can_parse_gradle_log(self):
@@ -98,6 +100,7 @@ class TestPlainLogParser:
 
 
 # ── Fingerprinting ────────────────────────────────────────────────
+
 
 class TestFingerprinting:
     def test_same_trace_different_line_numbers(self):
@@ -127,8 +130,12 @@ class TestFingerprinting:
 
     def test_fingerprint_results_adds_fingerprints(self):
         results = [
-            TestResult(name="t1", classname="C", outcome=TestOutcome.FAILED,
-                       stacktrace="java.lang.Error\n\tat X.y(X.java:1)"),
+            TestResult(
+                name="t1",
+                classname="C",
+                outcome=TestOutcome.FAILED,
+                stacktrace="java.lang.Error\n\tat X.y(X.java:1)",
+            ),
             TestResult(name="t2", classname="C", outcome=TestOutcome.PASSED),
         ]
         fingerprint_results(results)
@@ -138,6 +145,7 @@ class TestFingerprinting:
 
 # ── Store ─────────────────────────────────────────────────────────
 
+
 class TestStore:
     def _make_store(self, tmp_path):
         return Store(tmp_path / "test.db")
@@ -146,8 +154,15 @@ class TestStore:
         store = self._make_store(tmp_path)
         summary = RunSummary(run_id="r1", source="junit_xml")
         summary.add(TestResult(name="testA", classname="C", outcome=TestOutcome.PASSED))
-        summary.add(TestResult(name="testB", classname="C", outcome=TestOutcome.FAILED,
-                               stacktrace="err", fingerprint="fp123"))
+        summary.add(
+            TestResult(
+                name="testB",
+                classname="C",
+                outcome=TestOutcome.FAILED,
+                stacktrace="err",
+                fingerprint="fp123",
+            )
+        )
         store.ingest(summary)
 
         names = store.get_all_test_names()
@@ -171,6 +186,7 @@ class TestStore:
 
 # ── Analyzer ──────────────────────────────────────────────────────
 
+
 class TestAnalyzer:
     def test_detects_flaky_test(self, tmp_path):
         store = Store(tmp_path / "test.db")
@@ -179,11 +195,15 @@ class TestAnalyzer:
         for i in range(6):
             s = RunSummary(run_id=f"run-{i}", source="test")
             outcome = TestOutcome.PASSED if i % 2 == 0 else TestOutcome.FAILED
-            s.add(TestResult(
-                name="testFlaky", classname="C", outcome=outcome,
-                stacktrace="err" if outcome == TestOutcome.FAILED else None,
-                fingerprint="fp1" if outcome == TestOutcome.FAILED else None,
-            ))
+            s.add(
+                TestResult(
+                    name="testFlaky",
+                    classname="C",
+                    outcome=outcome,
+                    stacktrace="err" if outcome == TestOutcome.FAILED else None,
+                    fingerprint="fp1" if outcome == TestOutcome.FAILED else None,
+                )
+            )
             # A stable test for comparison
             s.add(TestResult(name="testStable", classname="C", outcome=TestOutcome.PASSED))
             store.ingest(s)
@@ -203,8 +223,11 @@ class TestAnalyzer:
         store = Store(tmp_path / "test.db")
         for i in range(5):
             s = RunSummary(run_id=f"run-{i}", source="test")
-            s.add(TestResult(name="testBroken", classname="C", outcome=TestOutcome.FAILED,
-                             fingerprint="fp1"))
+            s.add(
+                TestResult(
+                    name="testBroken", classname="C", outcome=TestOutcome.FAILED, fingerprint="fp1"
+                )
+            )
             store.ingest(s)
 
         flaky = analyze(store, min_runs=3)
@@ -214,14 +237,21 @@ class TestAnalyzer:
 
 # ── Reporters ─────────────────────────────────────────────────────
 
+
 class TestReporters:
     def test_json_report_flaky(self):
         from flakydetector.models import FlakyTest
-        tests = [FlakyTest(
-            test_name="C.testFlaky", total_runs=10, pass_count=5,
-            fail_count=5, flakiness_rate=1.0,
-            recommended_action="quarantine",
-        )]
+
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=10,
+                pass_count=5,
+                fail_count=5,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+            )
+        ]
         output = json_report.report_flaky(tests)
         data = json.loads(output)
         assert data["total_flaky"] == 1
@@ -229,11 +259,17 @@ class TestReporters:
 
     def test_markdown_report_flaky(self):
         from flakydetector.models import FlakyTest
-        tests = [FlakyTest(
-            test_name="C.testFlaky", total_runs=10, pass_count=5,
-            fail_count=5, flakiness_rate=1.0,
-            recommended_action="quarantine",
-        )]
+
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=10,
+                pass_count=5,
+                fail_count=5,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+            )
+        ]
         output = markdown.report_flaky(tests)
         assert "Flaky Test Report" in output
         assert "C.testFlaky" in output

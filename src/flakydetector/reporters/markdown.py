@@ -27,15 +27,25 @@ def report_flaky(flaky_tests: list[FlakyTest]) -> str:
     if monitor:
         lines.append(f"- :eyes: **Monitor:** {len(monitor)}")
 
-    lines.extend(["", "| Test | Flakiness | Runs | Pass/Fail | Action |", "|------|-----------|------|-----------|--------|"])
+    lines.extend(
+        [
+            "",
+            "| Test | Flakiness | Runs | Pass/Fail | Action |",
+            "|------|-----------|------|-----------|--------|",
+        ]
+    )
 
     for t in flaky_tests:
         pct = f"{t.flakiness_rate * 100:.0f}%"
         pf = f"{t.pass_count}/{t.fail_count}"
-        icon = {"quarantine": ":rotating_light:", "investigate": ":mag:", "monitor": ":eyes:"}.get(t.recommended_action, "")
+        icon = {"quarantine": ":rotating_light:", "investigate": ":mag:", "monitor": ":eyes:"}.get(
+            t.recommended_action, ""
+        )
         # Truncate long test names
         name = t.test_name if len(t.test_name) <= 60 else f"...{t.test_name[-57:]}"
-        lines.append(f"| `{name}` | {pct} | {t.total_runs} | {pf} | {icon} {t.recommended_action} |")
+        lines.append(
+            f"| `{name}` | {pct} | {t.total_runs} | {pf} | {icon} {t.recommended_action} |"
+        )
 
     lines.append("")
     return "\n".join(lines)
@@ -51,8 +61,8 @@ def report_run(summary: RunSummary) -> str:
         "",
         f"**Run:** `{summary.run_id}` | **Source:** {summary.source}",
         "",
-        f"| Total | Passed | Failed | Errors | Skipped |",
-        f"|-------|--------|--------|--------|---------|",
+        "| Total | Passed | Failed | Errors | Skipped |",
+        "|-------|--------|--------|--------|---------|",
         f"| {summary.total} | {summary.passed} | {summary.failed} | {summary.errored} | {summary.skipped} |",
         "",
     ]
@@ -68,7 +78,6 @@ def report_run(summary: RunSummary) -> str:
             by_fp.setdefault(fp, []).append(f)
 
         for fp, tests in by_fp.items():
-            sample = tests[0]
             label = f"`{fp}`" if fp != "no-fingerprint" else "_(no stacktrace)_"
             lines.append(f"**Root cause {label}** — {len(tests)} test(s):")
             for t in tests:

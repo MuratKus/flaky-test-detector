@@ -20,7 +20,6 @@ _STATUS_MAP = {
 
 
 class AllureJSONParser(BaseParser):
-
     def can_parse(self, path: Path) -> bool:
         """Works with individual result files or a directory of them."""
         if path.is_dir():
@@ -36,11 +35,7 @@ class AllureJSONParser(BaseParser):
     def parse(self, path: Path, run_id: str) -> RunSummary:
         summary = RunSummary(run_id=run_id, source="allure_json")
 
-        files = (
-            sorted(path.glob("*-result.json"))
-            if path.is_dir()
-            else [path]
-        )
+        files = sorted(path.glob("*-result.json")) if path.is_dir() else [path]
 
         # Also try all .json files if the glob above finds nothing
         if path.is_dir() and not files:

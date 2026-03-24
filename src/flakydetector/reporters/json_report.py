@@ -42,6 +42,8 @@ def report_run(summary: RunSummary) -> str:
         "errored": summary.errored,
         "skipped": summary.skipped,
         "failures": failures,
-        "unique_failure_fingerprints": len({f["fingerprint"] for f in failures if f["fingerprint"]}),
+        "unique_failure_fingerprints": len(
+            {f["fingerprint"] for f in failures if f["fingerprint"]}
+        ),
     }
     return json.dumps(data, indent=2)

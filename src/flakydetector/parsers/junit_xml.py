@@ -15,9 +15,8 @@ from flakydetector.parsers import BaseParser
 
 
 class JUnitXMLParser(BaseParser):
-
     def can_parse(self, path: Path) -> bool:
-        if not path.suffix == ".xml":
+        if path.suffix != ".xml":
             return False
         try:
             tree = ET.parse(path)
@@ -31,11 +30,7 @@ class JUnitXMLParser(BaseParser):
         root = tree.getroot()
         summary = RunSummary(run_id=run_id, source="junit_xml")
 
-        suites = (
-            root.findall("testsuite")
-            if root.tag == "testsuites"
-            else [root]
-        )
+        suites = root.findall("testsuite") if root.tag == "testsuites" else [root]
 
         for suite in suites:
             suite_name = suite.get("name", "")

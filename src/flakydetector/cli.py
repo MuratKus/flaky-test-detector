@@ -8,7 +8,6 @@ Usage:
     flaky-detect fingerprints                     # show common failure root causes
 """
 
-import sys
 import uuid
 from pathlib import Path
 
@@ -84,10 +83,13 @@ def ingest(ctx, path, run_id, fmt):
             )
 
     if fmt == "text":
-        click.echo(f"\nIngested {total_results} results from {len(files)} file(s) into run '{run_id}'.")
+        click.echo(
+            f"\nIngested {total_results} results from {len(files)} file(s) into run '{run_id}'."
+        )
         click.echo(f"Total runs in DB: {store.get_run_count()}")
     elif fmt == "json":
         import json
+
         click.echo(json.dumps({"run_id": run_id, "results_ingested": total_results}))
 
     store.close()
@@ -115,7 +117,9 @@ def analyze(ctx, fmt, min_runs):
         else:
             click.echo(f"\n{len(flaky_tests)} flaky test(s) detected:\n")
             for t in flaky_tests:
-                icon = {"quarantine": "🚨", "investigate": "🔍", "monitor": "👀"}.get(t.recommended_action, "")
+                icon = {"quarantine": "🚨", "investigate": "🔍", "monitor": "👀"}.get(
+                    t.recommended_action, ""
+                )
                 click.echo(
                     f"  {icon} {t.test_name}\n"
                     f"     flakiness={t.flakiness_rate:.0%}  "
@@ -155,7 +159,9 @@ def report(path, run_id, fmt):
             click.echo(markdown.report_run(summary))
         else:
             click.echo(f"\n=== {f.name} ({summary.source}) ===")
-            click.echo(f"Total: {summary.total} | ✓{summary.passed} ✗{summary.failed} ⚠{summary.errored} ⊘{summary.skipped}")
+            click.echo(
+                f"Total: {summary.total} | ✓{summary.passed} ✗{summary.failed} ⚠{summary.errored} ⊘{summary.skipped}"
+            )
             failures = [r for r in summary.results if r.outcome.value in ("failed", "error")]
             if failures:
                 fps = {}
@@ -207,7 +213,9 @@ def fingerprints(ctx):
     click.echo(f"\nTop failure root causes ({len(groups)} distinct):\n")
     for g in groups:
         tests = g["tests"].split(",") if g["tests"] else []
-        click.echo(f"  [{g['fingerprint'][:12]}] {g['count']} occurrence(s) across {len(tests)} test(s)")
+        click.echo(
+            f"  [{g['fingerprint'][:12]}] {g['count']} occurrence(s) across {len(tests)} test(s)"
+        )
         click.echo(f"    sample: {(g['sample_error'] or '')[:100]}")
         for t in tests[:3]:
             click.echo(f"    - {t}")

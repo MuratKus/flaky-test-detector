@@ -6,16 +6,15 @@ are stored with their fingerprints for trend analysis.
 """
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-from flakydetector.models import RunSummary, TestOutcome
+from flakydetector.models import RunSummary
 
 DEFAULT_DB = Path(".flaky-detector.db")
 
 
 class Store:
-
     def __init__(self, db_path: Path = DEFAULT_DB):
         self.db_path = db_path
         self.conn = sqlite3.connect(str(db_path))
@@ -58,16 +57,21 @@ class Store:
 
     def ingest(self, summary: RunSummary) -> int:
         """Store a run and its results. Returns number of results stored."""
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         self.conn.execute(
             """INSERT OR REPLACE INTO runs
                (run_id, source, ingested_at, total, passed, failed, errored, skipped)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                summary.run_id, summary.source, now,
-                summary.total, summary.passed, summary.failed,
-                summary.errored, summary.skipped,
+                summary.run_id,
+                summary.source,
+                now,
+                summary.total,
+                summary.passed,
+                summary.failed,
+                summary.errored,
+                summary.skipped,
             ),
         )
 
@@ -78,9 +82,15 @@ class Store:
                     error_message, stacktrace, fingerprint, suite)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    summary.run_id, r.fqn, r.classname, r.outcome.value,
-                    r.duration_sec, r.error_message or "", r.stacktrace or "",
-                    r.fingerprint or "", r.suite,
+                    summary.run_id,
+                    r.fqn,
+                    r.classname,
+                    r.outcome.value,
+                    r.duration_sec,
+                    r.error_message or "",
+                    r.stacktrace or "",
+                    r.fingerprint or "",
+                    r.suite,
                 ),
             )
 
@@ -103,9 +113,7 @@ class Store:
 
     def get_all_test_names(self) -> list[str]:
         """Get all distinct test names in the store."""
-        rows = self.conn.execute(
-            "SELECT DISTINCT test_name FROM results"
-        ).fetchall()
+        rows = self.conn.execute("SELECT DISTINCT test_name FROM results").fetchall()
         return [row["test_name"] for row in rows]
 
     def get_failure_fingerprint_counts(self) -> list[dict]:
