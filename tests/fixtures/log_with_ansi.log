@@ -1,0 +1,12 @@
+[0m[1m> Task :test[0m
+
+[32mcom.example.LoginTest[0m > [32mtestLoginSuccess[0m [32mPASSED[0m
+[31mcom.example.LoginTest[0m > [31mtestLoginTimeout[0m [31mFAILED[0m
+
+[31mjava.lang.AssertionError: Expected response within 5000ms
+	at com.example.LoginTest.testLoginTimeout(LoginTest.java:42)[0m
+
+[32mcom.example.CartTest[0m > [32mtestAddToCart[0m [32mPASSED[0m
+
+BUILD FAILED
+3 tests, 2 passed, 1 failed

@@ -1,0 +1,20 @@
+{
+  "name": "testLogin",
+  "fullName": "com.example.LoginTest.testLogin",
+  "status": "failed",
+  "parameters": [
+    {"name": "browser", "value": "Chrome"},
+    {"name": "os", "value": "Linux"}
+  ],
+  "statusDetails": {
+    "message": "Element not found: #submit-btn",
+    "trace": "org.openqa.selenium.NoSuchElementException: Element not found\n\tat com.example.LoginTest.testLogin(LoginTest.java:42)"
+  },
+  "labels": [
+    {"name": "suite", "value": "LoginTests"},
+    {"name": "feature", "value": "Authentication"},
+    {"name": "severity", "value": "critical"}
+  ],
+  "start": 1700000000000,
+  "stop": 1700000005200
+}

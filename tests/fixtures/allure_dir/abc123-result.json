@@ -1,0 +1,8 @@
+{
+  "name": "testA",
+  "fullName": "com.example.A.testA",
+  "status": "passed",
+  "labels": [{"name": "suite", "value": "SuiteA"}],
+  "start": 1700000030000,
+  "stop": 1700000031000
+}

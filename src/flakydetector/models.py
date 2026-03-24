@@ -24,6 +24,7 @@ class TestResult:
     fingerprint: str | None = None  # set after fingerprinting
     suite: str = ""  # grouping (file, suite name, etc.)
     timestamp: str | None = None
+    history_id: str | None = None  # Allure historyId for cross-run identity
 
     @property
     def fqn(self) -> str:

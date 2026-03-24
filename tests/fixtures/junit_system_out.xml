@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.IntegrationTest" tests="2" failures="1">
+  <testcase name="testDatabaseMigration" classname="com.example.IntegrationTest" time="5.4">
+    <failure message="Migration failed"/>
+    <system-out>Starting migration v42...
+Applying schema changes...
+ERROR: column "user_id" already exists</system-out>
+    <system-err>WARN: Retrying connection to postgres:5432</system-err>
+  </testcase>
+  <testcase name="testHealthCheck" classname="com.example.IntegrationTest" time="0.3">
+    <system-out>Health check: OK (200ms)</system-out>
+  </testcase>
+</testsuite>

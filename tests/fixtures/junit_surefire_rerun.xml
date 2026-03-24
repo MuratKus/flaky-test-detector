@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.FlakyTest" tests="3" failures="1" flakes="1">
+  <testcase name="testStable" classname="com.example.FlakyTest" time="0.5"/>
+  <testcase name="testFlakyConnection" classname="com.example.FlakyTest" time="3.2">
+    <flakyFailure message="Connection reset" type="java.io.IOException">
+java.io.IOException: Connection reset
+	at com.example.FlakyTest.testFlakyConnection(FlakyTest.java:28)
+    </flakyFailure>
+  </testcase>
+  <testcase name="testHardFailure" classname="com.example.FlakyTest" time="1.1">
+    <failure message="Assertion failed" type="AssertionError">
+AssertionError: expected true
+    </failure>
+    <rerunFailure message="Assertion failed" type="AssertionError">
+AssertionError: expected true
+    </rerunFailure>
+  </testcase>
+</testsuite>

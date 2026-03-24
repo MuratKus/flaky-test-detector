@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest-tests" tests="3">
+  <testcase name="renders login form" classname="LoginComponent" time="0.12"/>
+  <testcase name="validates email" classname="LoginComponent" time="0.08"/>
+  <testcase name="submits form" classname="LoginComponent" time="0.34">
+    <failure message="timeout">Error: Timeout after 5000ms</failure>
+  </testcase>
+</testsuites>

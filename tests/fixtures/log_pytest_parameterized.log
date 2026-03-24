@@ -1,0 +1,4 @@
+tests/test_browser.py::test_login[chrome] PASSED
+tests/test_browser.py::test_login[firefox-linux] FAILED
+tests/test_browser.py::test_login[safari] PASSED
+tests/test_browser.py::test_logout PASSED

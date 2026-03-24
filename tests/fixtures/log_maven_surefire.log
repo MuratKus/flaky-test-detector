@@ -1,0 +1,18 @@
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running com.example.LoginTest
+Tests run: 3, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 2.451 s <<< FAILURE! - in com.example.LoginTest
+testLoginTimeout(com.example.LoginTest)  Time elapsed: 1.234 s  <<< FAILURE!
+java.lang.AssertionError: Expected response within 5000ms
+	at com.example.LoginTest.testLoginTimeout(LoginTest.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+
+Running com.example.CartTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0.832 s - in com.example.CartTest
+
+Results:
+
+Tests run: 5, Failures: 1, Errors: 0, Skipped: 1
+
+BUILD FAILURE

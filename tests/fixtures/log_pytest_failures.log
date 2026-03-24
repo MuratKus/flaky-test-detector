@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.5, pytest-7.4.0
+collected 5 items
+
+tests/test_math.py::test_add PASSED
+tests/test_math.py::test_subtract PASSED
+tests/test_math.py::test_multiply PASSED
+tests/test_api.py::test_connection FAILED
+tests/test_api.py::test_retry FAILED
+
+=================================== FAILURES ===================================
+________________________________ test_connection _______________________________
+
+    def test_connection():
+        client = APIClient("http://localhost:8080")
+>       result = client.get("/health")
+E       ConnectionError: Connection refused
+
+tests/test_api.py:15: ConnectionError
+__________________________________ test_retry __________________________________
+
+    def test_retry():
+        client = APIClient("http://localhost:8080")
+>       result = client.get_with_retry("/data", retries=3)
+E       TimeoutError: All 3 retries exhausted
+
+tests/test_api.py:28: TimeoutError
+=========================== short test summary info ============================
+FAILED tests/test_api.py::test_connection - ConnectionError: Connection refused
+FAILED tests/test_api.py::test_retry - TimeoutError: All 3 retries exhausted
+=========================== 2 failed, 3 passed in 4.52s =======================

@@ -1,0 +1,11 @@
+com.example.BrowserTest > testLogin[Chrome] PASSED
+com.example.BrowserTest > testLogin[Firefox] FAILED
+
+java.lang.AssertionError: Element not visible
+	at com.example.BrowserTest.testLogin(BrowserTest.java:28)
+
+com.example.BrowserTest > testLogin[Safari] PASSED
+com.example.BrowserTest > testLogout[Chrome] PASSED
+
+BUILD FAILED
+4 tests, 3 passed, 1 failed

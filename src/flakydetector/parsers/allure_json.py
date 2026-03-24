@@ -59,6 +59,13 @@ class AllureJSONParser(BaseParser):
             return None
 
         name = data.get("name", "unknown")
+
+        # Append parameter values to test name for parameterized tests
+        params = data.get("parameters", [])
+        if params:
+            param_str = ", ".join(p.get("value", "") for p in params)
+            name = f"{name}[{param_str}]"
+
         fullname = data.get("fullName", "")
         classname = fullname.rsplit(".", 1)[0] if "." in fullname else ""
 
@@ -79,6 +86,15 @@ class AllureJSONParser(BaseParser):
             duration_sec=duration_sec,
             error_message=error_message,
             stacktrace=stacktrace,
-            suite=data.get("labels", [{}])[0].get("value", "") if data.get("labels") else "",
+            suite=self._extract_label(data.get("labels", []), "suite"),
             timestamp=str(start) if start else None,
+            history_id=data.get("historyId"),
         )
+
+    @staticmethod
+    def _extract_label(labels: list[dict], name: str, default: str = "") -> str:
+        """Search labels list for a specific label by name."""
+        for label in labels:
+            if label.get("name") == name:
+                return label.get("value", default)
+        return default

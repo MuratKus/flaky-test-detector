@@ -1,0 +1,14 @@
+{
+  "name": "testCheckout",
+  "fullName": "com.example.CartTest.testCheckout",
+  "status": "passed",
+  "labels": [
+    {"name": "feature", "value": "Shopping Cart"},
+    {"name": "severity", "value": "blocker"},
+    {"name": "suite", "value": "CartTests"},
+    {"name": "parentSuite", "value": "E2E Tests"},
+    {"name": "epic", "value": "Commerce"}
+  ],
+  "start": 1700000010000,
+  "stop": 1700000012000
+}

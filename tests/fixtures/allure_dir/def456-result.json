@@ -1,0 +1,9 @@
+{
+  "name": "testB",
+  "fullName": "com.example.B.testB",
+  "status": "failed",
+  "statusDetails": {"message": "expected 1 but got 2", "trace": "AssertionError"},
+  "labels": [{"name": "suite", "value": "SuiteB"}],
+  "start": 1700000032000,
+  "stop": 1700000033000
+}

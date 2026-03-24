@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Aggregated" tests="4" failures="1">
+  <testsuite name="module-api" tests="2" failures="0">
+    <testsuite name="com.api.UserTest" tests="2" failures="0">
+      <testcase name="testGetUser" classname="com.api.UserTest" time="0.5"/>
+      <testcase name="testCreateUser" classname="com.api.UserTest" time="0.8"/>
+    </testsuite>
+  </testsuite>
+  <testsuite name="module-core" tests="2" failures="1">
+    <testsuite name="com.core.CacheTest" tests="2" failures="1">
+      <testcase name="testCacheHit" classname="com.core.CacheTest" time="0.1"/>
+      <testcase name="testCacheExpiry" classname="com.core.CacheTest" time="1.2">
+        <failure message="Cache did not expire" type="AssertionError">
+AssertionError: Cache did not expire after TTL
+        </failure>
+      </testcase>
+    </testsuite>
+  </testsuite>
+</testsuites>
