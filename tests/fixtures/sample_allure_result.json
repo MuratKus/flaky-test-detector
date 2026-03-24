@@ -1,0 +1,14 @@
+{
+  "name": "testSearchResults",
+  "fullName": "com.example.SearchTest.testSearchResults",
+  "status": "failed",
+  "statusDetails": {
+    "message": "Expected 10 results but got 0",
+    "trace": "java.lang.AssertionError: Expected 10 results but got 0\n\tat com.example.SearchTest.testSearchResults(SearchTest.java:55)\n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)"
+  },
+  "start": 1700000000000,
+  "stop": 1700000003500,
+  "labels": [
+    {"name": "suite", "value": "SearchTests"}
+  ]
+}

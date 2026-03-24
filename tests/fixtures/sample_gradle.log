@@ -1,0 +1,20 @@
+Starting Gradle test run...
+
+com.example.LoginTest > testLoginSuccess PASSED
+com.example.LoginTest > testLoginTimeout FAILED
+
+java.lang.AssertionError: Expected response within 5000ms
+	at com.example.LoginTest.testLoginTimeout(LoginTest.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+
+com.example.CartTest > testAddToCart PASSED
+com.example.CartTest > testCheckout FAILED
+
+java.lang.NullPointerException
+	at com.example.service.CartService.getItems(CartService.java:88)
+	at com.example.CartTest.testCheckout(CartTest.java:67)
+
+com.example.CartTest > testRemoveFromCart SKIPPED
+
+BUILD FAILED
+5 tests, 2 passed, 2 failed, 1 skipped

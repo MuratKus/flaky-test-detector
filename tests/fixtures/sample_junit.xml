@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Test Suite" tests="6" failures="2" errors="1" skipped="1" time="12.345">
+  <testsuite name="com.example.LoginTest" tests="3" failures="1" errors="0" time="5.2">
+    <testcase name="testLoginSuccess" classname="com.example.LoginTest" time="1.2"/>
+    <testcase name="testLoginInvalidPassword" classname="com.example.LoginTest" time="2.1"/>
+    <testcase name="testLoginTimeout" classname="com.example.LoginTest" time="1.9">
+      <failure message="Expected response within 5000ms" type="java.lang.AssertionError">
+java.lang.AssertionError: Expected response within 5000ms
+	at com.example.LoginTest.testLoginTimeout(LoginTest.java:42)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="com.example.CartTest" tests="3" failures="1" errors="1" skipped="1" time="7.1">
+    <testcase name="testAddToCart" classname="com.example.CartTest" time="0.8"/>
+    <testcase name="testRemoveFromCart" classname="com.example.CartTest" time="0.0">
+      <skipped/>
+    </testcase>
+    <testcase name="testCheckout" classname="com.example.CartTest" time="3.5">
+      <failure message="NullPointerException at CartService" type="java.lang.NullPointerException">
+java.lang.NullPointerException
+	at com.example.service.CartService.getItems(CartService.java:88)
+	at com.example.CartTest.testCheckout(CartTest.java:67)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+      </failure>
+    </testcase>
+    <testcase name="testPaymentGateway" classname="com.example.CartTest" time="2.8">
+      <error message="Connection refused" type="java.net.ConnectException">
+java.net.ConnectException: Connection refused (Connection refused)
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at com.example.payment.Gateway.connect(Gateway.java:34)
+	at com.example.CartTest.testPaymentGateway(CartTest.java:91)
+      </error>
+    </testcase>
+  </testsuite>
+</testsuites>

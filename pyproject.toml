@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flaky-test-detector"
+version = "0.1.0"
+description = "Detect flaky tests by parsing CI artifacts, fingerprinting failures, and tracking test stability across runs."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Murat Kus", email = "me@murat-kus.com"},
+]
+keywords = ["testing", "flaky-tests", "ci", "qa", "test-automation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "click>=8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+
+[project.scripts]
+flaky-detect = "flakydetector.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/MuratKus/flaky-test-detector"
+Issues = "https://github.com/MuratKus/flaky-test-detector/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
