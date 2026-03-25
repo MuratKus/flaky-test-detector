@@ -1,0 +1,99 @@
+name: "Flaky Test Detector"
+description: "Parse CI test artifacts, fingerprint failures, and detect flaky tests across runs"
+
+branding:
+  icon: "alert-triangle"
+  color: "yellow"
+
+inputs:
+  path:
+    description: "Path to test artifacts (file or directory)"
+    required: true
+  mode:
+    description: '"report" for one-shot analysis, "analyze" for multi-run flakiness tracking'
+    default: "report"
+  run-id:
+    description: "Unique run identifier (defaults to github.run_id-github.run_attempt)"
+    default: ""
+  db-path:
+    description: "SQLite database path for multi-run tracking (analyze mode)"
+    default: ".flaky-detector.db"
+  min-runs:
+    description: "Minimum runs before flagging as flaky (analyze mode)"
+    default: "3"
+  comment-on-pr:
+    description: "Post markdown report as a PR comment"
+    default: "true"
+  python-version:
+    description: "Python version to use"
+    default: "3.11"
+
+outputs:
+  report:
+    description: "The markdown report content"
+    value: ${{ steps.detect.outputs.report }}
+  flaky-count:
+    description: "Number of flaky tests detected (analyze mode)"
+    value: ${{ steps.detect.outputs.flaky_count }}
+  total-tests:
+    description: "Total tests parsed (report mode)"
+    value: ${{ steps.detect.outputs.total_tests }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install flaky-test-detector
+      shell: bash
+      run: pip install "${{ github.action_path }}"
+
+    - name: Detect flaky tests
+      id: detect
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_RUN_ID: ${{ inputs.run-id || format('{0}-{1}', github.run_id, github.run_attempt) }}
+        INPUT_DB_PATH: ${{ inputs.db-path }}
+        INPUT_MIN_RUNS: ${{ inputs.min-runs }}
+      run: python "${{ github.action_path }}/action/entrypoint.py"
+
+    - name: Comment on PR
+      if: >-
+        inputs.comment-on-pr == 'true'
+        && github.event_name == 'pull_request'
+        && steps.detect.outputs.report != ''
+      uses: actions/github-script@v7
+      env:
+        REPORT: ${{ steps.detect.outputs.report }}
+      with:
+        script: |
+          const marker = '<!-- flaky-test-detector -->';
+          const body = marker + '\n' + process.env.REPORT;
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          const existing = comments.find(c => c.body.includes(marker));
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+          }

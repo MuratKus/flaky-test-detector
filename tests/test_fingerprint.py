@@ -93,12 +93,12 @@ SHOULD_MATCH = [
     (
         "java_same_exception_different_thread_ids",
         (
-            "Exception in thread \"pool-3-thread-7\" java.lang.OutOfMemoryError: Java heap space\n"
+            'Exception in thread "pool-3-thread-7" java.lang.OutOfMemoryError: Java heap space\n'
             "\tat com.acme.cache.LRUCache.put(LRUCache.java:112)\n"
             "\tat com.acme.service.DataService.process(DataService.java:67)"
         ),
         (
-            "Exception in thread \"pool-12-thread-1\" java.lang.OutOfMemoryError: Java heap space\n"
+            'Exception in thread "pool-12-thread-1" java.lang.OutOfMemoryError: Java heap space\n'
             "\tat com.acme.cache.LRUCache.put(LRUCache.java:112)\n"
             "\tat com.acme.service.DataService.process(DataService.java:67)"
         ),
@@ -347,7 +347,9 @@ SHOULD_NOT_MATCH = [
 class TestFingerprintShouldMatch:
     """Pairs that represent the SAME root cause — fingerprints must be equal."""
 
-    @pytest.mark.parametrize("label,trace_a,trace_b", SHOULD_MATCH, ids=[s[0] for s in SHOULD_MATCH])
+    @pytest.mark.parametrize(
+        "label,trace_a,trace_b", SHOULD_MATCH, ids=[s[0] for s in SHOULD_MATCH]
+    )
     def test_same_fingerprint(self, label, trace_a, trace_b):
         fp_a = fingerprint(trace_a)
         fp_b = fingerprint(trace_b)
