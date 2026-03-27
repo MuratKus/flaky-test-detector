@@ -6,7 +6,7 @@ Parse CI test artifacts, fingerprint failures by stacktrace, and detect flaky te
 - Parses JUnit XML, Allure JSON, and plain CI logs (Gradle, pytest, etc.)
 - Normalizes stacktraces (strips line numbers, timestamps, UUIDs, memory addresses) and hashes them to group failures by root cause
 - Tracks test outcomes across runs in SQLite to detect non-deterministic tests
-- Outputs JSON (pipeable), Markdown (PR comments), or plain text
+- Outputs JSON (pipeable), Markdown (PR comments), HTML (self-contained reports with SVG charts), or plain text
 
 ## Install
 
@@ -24,6 +24,9 @@ flaky-detect report build/test-results/
 
 # Same thing, but as markdown for a PR comment
 flaky-detect report build/test-results/ --format markdown
+
+# Generate a self-contained HTML report with SVG charts
+flaky-detect report build/test-results/ --format html > report.html
 ```
 
 ### Track flakiness across runs
@@ -162,14 +165,16 @@ src/flakydetector/
 │   └── plain_log.py    # Plain text log parser (Gradle, pytest, etc.)
 └── reporters/
     ├── json_report.py  # JSON output (pipeable)
-    └── markdown.py     # Markdown output (PR comments)
+    ├── markdown.py     # Markdown output (PR comments)
+    └── html_report.py  # HTML output (self-contained with SVG charts)
 ```
 
 ## Development
 
 ```bash
-pip install -e ".[dev]"
-pytest tests/ -v
+uv sync
+uv run pytest tests/ -v
+uv run ruff check .
 ```
 
 ## License

@@ -96,13 +96,13 @@ def ingest(ctx, path, run_id, fmt):
 
 
 @main.command()
-@click.option("--format", "fmt", type=click.Choice(["json", "markdown", "text"]), default="text")
+@click.option("--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text")
 @click.option("--min-runs", default=3, help="Minimum runs before flagging as flaky.")
 @click.pass_context
 def analyze(ctx, fmt, min_runs):
     """Analyze stored results and report flaky tests."""
     from flakydetector.analyzer import analyze as run_analysis
-    from flakydetector.reporters import json_report, markdown
+    from flakydetector.reporters import html_report, json_report, markdown
 
     store = Store(ctx.obj["db_path"])
     flaky_tests = run_analysis(store, min_runs=min_runs)
@@ -111,6 +111,8 @@ def analyze(ctx, fmt, min_runs):
         click.echo(json_report.report_flaky(flaky_tests))
     elif fmt == "markdown":
         click.echo(markdown.report_flaky(flaky_tests))
+    elif fmt == "html":
+        click.echo(html_report.report_flaky(flaky_tests))
     else:
         if not flaky_tests:
             click.echo("No flaky tests detected.")
@@ -136,10 +138,10 @@ def analyze(ctx, fmt, min_runs):
 @main.command()
 @click.argument("path", type=click.Path(exists=True))
 @click.option("--run-id", default=None)
-@click.option("--format", "fmt", type=click.Choice(["json", "markdown", "text"]), default="text")
+@click.option("--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text")
 def report(path, run_id, fmt):
     """One-shot: parse and report without storing (stateless mode)."""
-    from flakydetector.reporters import json_report, markdown
+    from flakydetector.reporters import html_report, json_report, markdown
 
     path = Path(path)
     run_id = run_id or str(uuid.uuid4())[:8]
@@ -157,6 +159,8 @@ def report(path, run_id, fmt):
             click.echo(json_report.report_run(summary))
         elif fmt == "markdown":
             click.echo(markdown.report_run(summary))
+        elif fmt == "html":
+            click.echo(html_report.report_run(summary))
         else:
             click.echo(f"\n=== {f.name} ({summary.source}) ===")
             click.echo(

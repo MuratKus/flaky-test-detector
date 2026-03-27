@@ -49,6 +49,13 @@ class TestReport:
         assert result.returncode == 0
         assert "plain_log" in result.stdout
 
+    def test_report_html_is_valid(self):
+        result = run_cli("report", str(FIXTURES / "sample_junit.xml"), "--format", "html")
+        assert result.returncode == 0
+        assert "<!DOCTYPE html>" in result.stdout
+        assert "</html>" in result.stdout
+        assert "<svg" in result.stdout
+
 
 class TestDirectoryScanning:
     """Test pointing CLI at a directory with mixed file types."""
@@ -130,6 +137,14 @@ class TestIngestAnalyzeFlow:
         run_cli("--db", db, "ingest", str(FIXTURES / "sample_junit.xml"), "--run-id", "r1")
         result = run_cli("--db", db, "analyze", "--format", "markdown")
         assert result.returncode == 0
+        assert "Flaky Test Report" in result.stdout
+
+    def test_analyze_html_output(self, tmp_path):
+        db = str(tmp_path / "test.db")
+        run_cli("--db", db, "ingest", str(FIXTURES / "sample_junit.xml"), "--run-id", "r1")
+        result = run_cli("--db", db, "analyze", "--format", "html")
+        assert result.returncode == 0
+        assert "<!DOCTYPE html>" in result.stdout
         assert "Flaky Test Report" in result.stdout
 
 
