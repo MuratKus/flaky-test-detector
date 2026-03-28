@@ -58,6 +58,11 @@ flaky-detect fingerprints
 
 ## Example Output
 
+```bash
+# Customize flakiness thresholds
+flaky-detect analyze --threshold 0.3 --quarantine-at 0.7 --investigate-at 0.4
+```
+
 ```
 $ flaky-detect analyze
 

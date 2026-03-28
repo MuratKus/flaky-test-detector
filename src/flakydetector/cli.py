@@ -99,14 +99,23 @@ def ingest(ctx, path, run_id, fmt):
 @click.option("--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text")
 @click.option("-o", "--output", "output_path", type=click.Path(), default=None, help="Write output to file instead of stdout.")
 @click.option("--min-runs", default=3, help="Minimum runs before flagging as flaky.")
+@click.option("--threshold", default=0.2, type=float, help="Minimum flakiness rate to flag (0.0-1.0).")
+@click.option("--quarantine-at", default=0.5, type=float, help="Flakiness rate at or above which to recommend quarantine.")
+@click.option("--investigate-at", default=0.3, type=float, help="Flakiness rate at or above which to recommend investigation.")
 @click.pass_context
-def analyze(ctx, fmt, output_path, min_runs):
+def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investigate_at):
     """Analyze stored results and report flaky tests."""
+    from flakydetector.analyzer import Thresholds
     from flakydetector.analyzer import analyze as run_analysis
     from flakydetector.reporters import html_report, json_report, markdown
 
+    thresholds = Thresholds(
+        min_flakiness=threshold,
+        quarantine=quarantine_at,
+        investigate=investigate_at,
+    )
     store = Store(ctx.obj["db_path"])
-    flaky_tests = run_analysis(store, min_runs=min_runs)
+    flaky_tests = run_analysis(store, min_runs=min_runs, thresholds=thresholds)
 
     if fmt == "json":
         output = json_report.report_flaky(flaky_tests)

@@ -34,6 +34,52 @@ class TestAnalyzer:
         assert ft.recommended_action == "quarantine"
         store.close()
 
+    def test_custom_thresholds(self, tmp_path):
+        """Configurable thresholds change which tests get flagged and how."""
+        store = Store(tmp_path / "test.db")
+
+        # Create a test with 70% pass rate → flakiness = 1 - abs(0.7-0.5)*2 = 0.6
+        for i in range(10):
+            s = RunSummary(run_id=f"run-{i}", source="test")
+            outcome = TestOutcome.PASSED if i < 7 else TestOutcome.FAILED
+            s.add(
+                TestResult(
+                    name="testMedium",
+                    classname="C",
+                    outcome=outcome,
+                    fingerprint="fp1" if outcome == TestOutcome.FAILED else None,
+                )
+            )
+            store.ingest(s)
+
+        # Default threshold (0.2) should flag it
+        flaky = analyze(store, min_runs=3)
+        assert len(flaky) == 1
+
+        # High threshold should exclude it
+        from flakydetector.analyzer import Thresholds
+
+        strict = Thresholds(min_flakiness=0.8)
+        flaky = analyze(store, min_runs=3, thresholds=strict)
+        assert len(flaky) == 0
+
+        # Custom action thresholds: 0.6 is now "monitor" instead of "quarantine"
+        custom = Thresholds(quarantine=0.9, investigate=0.7)
+        flaky = analyze(store, min_runs=3, thresholds=custom)
+        assert len(flaky) == 1
+        assert flaky[0].recommended_action == "monitor"
+
+        store.close()
+
+    def test_thresholds_from_defaults(self):
+        """Thresholds class has sensible defaults matching current behavior."""
+        from flakydetector.analyzer import Thresholds
+
+        t = Thresholds()
+        assert t.min_flakiness == 0.2
+        assert t.quarantine == 0.5
+        assert t.investigate == 0.3
+
     def test_no_flaky_when_always_fails(self, tmp_path):
         store = Store(tmp_path / "test.db")
         for i in range(5):

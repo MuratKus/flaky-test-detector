@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flaky Test Report</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+         margin: 0; padding: 2rem; background: #f8f9fa; color: #212529; }
+  h1 { margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { border: 1px solid #dee2e6; padding: 0.5rem 0.75rem; text-align: left; }
+  th { background: #e9ecef; }
+  .badge { display: inline-block; padding: 0.2em 0.6em; border-radius: 4px;
+            font-size: 0.85em; font-weight: 600; color: #fff; }
+  .badge-quarantine { background: #dc3545; }
+  .badge-investigate { background: #fd7e14; }
+  .badge-monitor { background: #0d6efd; }
+  .chart-container { display: inline-block; margin: 1rem 0; }
+  .summary-cards { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .card { background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
+           padding: 1rem 1.5rem; min-width: 100px; text-align: center; }
+  .card-value { font-size: 1.8rem; font-weight: 700; }
+  .card-label { font-size: 0.85rem; color: #6c757d; }
+  .fp-group { background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
+               padding: 1rem; margin: 0.75rem 0; }
+  .fp-header { font-weight: 600; margin-bottom: 0.5rem; }
+  .empty { color: #6c757d; font-style: italic; padding: 2rem 0; }
+</style>
+</head>
+<body>
+<h1>Flaky Test Report</h1>
+<p><strong>8 flaky test(s) detected</strong></p>
+<div class="chart-container">
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="278" role="img" aria-label="Flakiness chart">
+  <text x="212" y="25.599999999999998" text-anchor="end" font-size="12">...oginServiceTest.testLoginTimeout</text>
+  <rect x="220" y="6" width="500.0" height="28" rx="3" fill="#dc3545" />
+  <text x="726.0" y="25.599999999999998" font-size="12" fill="#495057">100%</text>
+  <text x="212" y="59.599999999999994" text-anchor="end" font-size="12">...ceTest.testConcurrentReservation</text>
+  <rect x="220" y="40" width="335.0" height="28" rx="3" fill="#dc3545" />
+  <text x="561.0" y="59.599999999999994" font-size="12" fill="#495057">67%</text>
+  <text x="212" y="93.6" text-anchor="end" font-size="12">...kServiceTest.testWebhookDelivery</text>
+  <rect x="220" y="74" width="300.0" height="28" rx="3" fill="#dc3545" />
+  <text x="526.0" y="93.6" font-size="12" fill="#495057">60%</text>
+  <text x="212" y="127.6" text-anchor="end" font-size="12">...SearchTest.testSearchWithFilters</text>
+  <rect x="220" y="108" width="300.0" height="28" rx="3" fill="#dc3545" />
+  <text x="526.0" y="127.6" font-size="12" fill="#495057">60%</text>
+  <text x="212" y="161.6" text-anchor="end" font-size="12">...utTest.testCheckoutWithPromoCode</text>
+  <rect x="220" y="142" width="250.0" height="28" rx="3" fill="#dc3545" />
+  <text x="476.0" y="161.6" font-size="12" fill="#495057">50%</text>
+  <text x="212" y="195.6" text-anchor="end" font-size="12">...aymentGatewayTest.testChargeCard</text>
+  <rect x="220" y="176" width="200.0" height="28" rx="3" fill="#fd7e14" />
+  <text x="426.0" y="195.6" font-size="12" fill="#495057">40%</text>
+  <text x="212" y="229.6" text-anchor="end" font-size="12">...ileServiceTest.testUpdateProfile</text>
+  <rect x="220" y="210" width="200.0" height="28" rx="3" fill="#fd7e14" />
+  <text x="426.0" y="229.6" font-size="12" fill="#495057">40%</text>
+  <text x="212" y="263.6" text-anchor="end" font-size="12">...ServiceTest.testSendWelcomeEmail</text>
+  <rect x="220" y="244" width="200.0" height="28" rx="3" fill="#fd7e14" />
+  <text x="426.0" y="263.6" font-size="12" fill="#495057">40%</text>
+</svg>
+</div>
+<table>
+<thead><tr><th>Test</th><th>Flakiness</th><th>Runs</th><th>Pass/Fail</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>com.acme.auth.LoginServiceTest.testLoginTimeout</td><td>100%</td><td>12</td><td>6/6</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td>com.acme.inventory.StockServiceTest.testConcurrentReservation</td><td>67%</td><td>12</td><td>4/8</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td>com.acme.notification.WebhookServiceTest.testWebhookDelivery</td><td>60%</td><td>10</td><td>7/3</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td>com.acme.search.ProductSearchTest.testSearchWithFilters</td><td>60%</td><td>10</td><td>3/7</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td>com.acme.cart.CheckoutTest.testCheckoutWithPromoCode</td><td>50%</td><td>8</td><td>6/2</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td>com.acme.payment.PaymentGatewayTest.testChargeCard</td><td>40%</td><td>10</td><td>8/2</td><td><span class="badge badge-investigate">investigate</span></td></tr>
+<tr><td>com.acme.user.ProfileServiceTest.testUpdateProfile</td><td>40%</td><td>10</td><td>8/2</td><td><span class="badge badge-investigate">investigate</span></td></tr>
+<tr><td>com.acme.notification.EmailServiceTest.testSendWelcomeEmail</td><td>40%</td><td>15</td><td>12/3</td><td><span class="badge badge-investigate">investigate</span></td></tr>
+</tbody></table>
+</body>
+</html>

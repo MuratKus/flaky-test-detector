@@ -11,6 +11,8 @@ Flakiness rate: 1.0 - abs(pass_rate - 0.5) * 2
   - A test passing 80% of the time → flakiness 0.4 (somewhat flaky)
 """
 
+from dataclasses import dataclass
+
 from flakydetector.models import FlakyTest
 from flakydetector.store import Store
 
@@ -21,8 +23,22 @@ MIN_RUNS_FOR_DETECTION = 3
 FLAKINESS_THRESHOLD = 0.2
 
 
-def analyze(store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION) -> list[FlakyTest]:
+@dataclass
+class Thresholds:
+    """Configurable thresholds for flakiness detection and action classification."""
+
+    min_flakiness: float = FLAKINESS_THRESHOLD  # below this, test is not flagged
+    quarantine: float = 0.5   # >= this → quarantine
+    investigate: float = 0.3  # >= this → investigate
+    # anything >= min_flakiness but below investigate → monitor
+
+
+def analyze(store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION,
+            thresholds: Thresholds | None = None) -> list[FlakyTest]:
     """Analyze all tests in the store and return flaky ones."""
+    if thresholds is None:
+        thresholds = Thresholds()
+
     flaky_tests = []
     test_names = store.get_all_test_names()
 
@@ -41,7 +57,7 @@ def analyze(store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION) -> list[FlakyT
         pass_rate = passes / total
         flakiness = 1.0 - abs(pass_rate - 0.5) * 2
 
-        if flakiness < FLAKINESS_THRESHOLD:
+        if flakiness < thresholds.min_flakiness:
             continue
 
         # Collect distinct failure fingerprints
@@ -50,7 +66,7 @@ def analyze(store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION) -> list[FlakyT
         )
 
         # Determine recommended action
-        action = _recommend_action(flakiness, total, fingerprints)
+        action = _recommend_action(flakiness, total, fingerprints, thresholds)
 
         flaky_tests.append(
             FlakyTest(
@@ -70,15 +86,17 @@ def analyze(store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION) -> list[FlakyT
     return flaky_tests
 
 
-def _recommend_action(flakiness: float, total_runs: int, fingerprints: list[str]) -> str:
+def _recommend_action(flakiness: float, total_runs: int, fingerprints: list[str],
+                      thresholds: Thresholds | None = None) -> str:
     """Suggest what to do about a flaky test."""
-    if flakiness >= 0.8:
-        return "quarantine"  # extremely flaky, remove from blocking gates
-    elif flakiness >= 0.5:
-        return "quarantine"  # significantly flaky
-    elif flakiness >= 0.3:
-        return "investigate"  # moderately flaky, needs attention
+    if thresholds is None:
+        thresholds = Thresholds()
+
+    if flakiness >= thresholds.quarantine:
+        return "quarantine"
+    elif flakiness >= thresholds.investigate:
+        return "investigate"
     elif len(fingerprints) > 2:
         return "investigate"  # multiple distinct failure modes
     else:
-        return "monitor"  # low flakiness, keep an eye on it
+        return "monitor"
