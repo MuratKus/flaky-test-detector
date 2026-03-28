@@ -35,4 +35,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync
-      - run: uv run pytest tests/ -v --tb=short
+      - run: uv run pytest tests/ -v --tb=short --cov=flakydetector --cov-report=term-missing
+      - name: Generate coverage badge
+        if: matrix.python-version == '3.13' && github.ref == 'refs/heads/main'
+        run: |
+          COVERAGE=$(uv run pytest tests/ --cov=flakydetector --cov-report=term 2>/dev/null | grep '^TOTAL' | awk '{print $NF}' | tr -d '%')
+          echo "Coverage: ${COVERAGE}%"

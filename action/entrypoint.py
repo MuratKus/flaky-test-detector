@@ -46,11 +46,24 @@ def run_cli(*args: str) -> subprocess.CompletedProcess:
     )
 
 
+def _write_html_artifact(args_base: list[str]) -> None:
+    """Generate an HTML report and write it to a file for artifact upload."""
+    html_args = [*args_base, "--format", "html"]
+    html_result = run_cli(*html_args)
+    if html_result.returncode == 0 and html_result.stdout.strip():
+        html_path = os.environ.get("INPUT_HTML_REPORT_PATH", "flaky-report.html")
+        with open(html_path, "w") as f:
+            f.write(html_result.stdout)
+        write_output("html_report_path", html_path)
+
+
 def _report_mode(path: str, run_id: str) -> int:
     """One-shot: parse artifacts and produce a markdown report."""
     args = ["report", path, "--format", "markdown"]
+    base_args = ["report", path]
     if run_id:
         args.extend(["--run-id", run_id])
+        base_args.extend(["--run-id", run_id])
 
     result = run_cli(*args)
     if result.returncode != 0:
@@ -62,9 +75,7 @@ def _report_mode(path: str, run_id: str) -> int:
     write_summary(report)
 
     # Get JSON for structured outputs
-    json_args = ["report", path, "--format", "json"]
-    if run_id:
-        json_args.extend(["--run-id", run_id])
+    json_args = [*base_args, "--format", "json"]
     json_result = run_cli(*json_args)
     if json_result.returncode == 0:
         try:
@@ -72,6 +83,9 @@ def _report_mode(path: str, run_id: str) -> int:
             write_output("total_tests", str(data.get("total", 0)))
         except json.JSONDecodeError:
             pass
+
+    # Generate HTML artifact
+    _write_html_artifact(base_args)
 
     return 0
 
@@ -106,6 +120,9 @@ def _analyze_mode(path: str, run_id: str, db_path: str, min_runs: str) -> int:
             write_output("flaky_count", str(data.get("total_flaky", 0)))
         except json.JSONDecodeError:
             pass
+
+    # Generate HTML artifact
+    _write_html_artifact(["--db", db_path, "analyze", "--min-runs", min_runs])
 
     return 0
 

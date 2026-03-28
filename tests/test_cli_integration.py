@@ -179,6 +179,35 @@ class TestHistoryAndFingerprints:
         assert "root cause" in result.stdout.lower()
 
 
+class TestOutputFlag:
+    """Test -o / --output flag writes to file."""
+
+    def test_report_output_to_file(self, tmp_path):
+        out_file = tmp_path / "report.html"
+        result = run_cli(
+            "report", str(FIXTURES / "sample_junit.xml"),
+            "--format", "html", "-o", str(out_file),
+        )
+        assert result.returncode == 0
+        assert "Report written to" in result.stdout
+        content = out_file.read_text()
+        assert "<!DOCTYPE html>" in content
+
+    def test_analyze_output_to_file(self, tmp_path):
+        db = str(tmp_path / "test.db")
+        out_file = tmp_path / "analyze.json"
+        run_cli("--db", db, "ingest", str(FIXTURES / "sample_junit.xml"), "--run-id", "r1")
+        result = run_cli(
+            "--db", db, "analyze",
+            "--format", "json", "-o", str(out_file),
+        )
+        assert result.returncode == 0
+        assert "Report written to" in result.stdout
+        import json
+        data = json.loads(out_file.read_text())
+        assert "total_flaky" in data
+
+
 class TestErrorCases:
     """Test CLI handles errors gracefully."""
 

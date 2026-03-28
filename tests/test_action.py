@@ -127,6 +127,32 @@ class TestEntrypoint:
         assert "report<<EOF" in content
         assert "total_tests=" in content
 
+    def test_report_mode_generates_html_artifact(self, tmp_path):
+        """Report mode writes an HTML file for artifact upload."""
+        output_file = tmp_path / "github_output"
+        summary_file = tmp_path / "step_summary"
+        html_path = tmp_path / "report.html"
+        output_file.touch()
+        summary_file.touch()
+
+        run_entrypoint(
+            {
+                "INPUT_PATH": str(FIXTURES / "sample_junit.xml"),
+                "INPUT_MODE": "report",
+                "INPUT_RUN_ID": "",
+                "INPUT_DB_PATH": str(tmp_path / "test.db"),
+                "INPUT_MIN_RUNS": "3",
+                "INPUT_HTML_REPORT_PATH": str(html_path),
+                "GITHUB_OUTPUT": str(output_file),
+                "GITHUB_STEP_SUMMARY": str(summary_file),
+            }
+        )
+
+        assert html_path.exists()
+        html_content = html_path.read_text()
+        assert "<!DOCTYPE html>" in html_content
+        assert "html_report_path=" in output_file.read_text()
+
     def test_analyze_mode(self, tmp_path):
         """Analyze mode ingests then reports flakiness."""
         db = str(tmp_path / "test.db")

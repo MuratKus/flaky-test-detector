@@ -97,9 +97,10 @@ def ingest(ctx, path, run_id, fmt):
 
 @main.command()
 @click.option("--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text")
+@click.option("-o", "--output", "output_path", type=click.Path(), default=None, help="Write output to file instead of stdout.")
 @click.option("--min-runs", default=3, help="Minimum runs before flagging as flaky.")
 @click.pass_context
-def analyze(ctx, fmt, min_runs):
+def analyze(ctx, fmt, output_path, min_runs):
     """Analyze stored results and report flaky tests."""
     from flakydetector.analyzer import analyze as run_analysis
     from flakydetector.reporters import html_report, json_report, markdown
@@ -108,11 +109,20 @@ def analyze(ctx, fmt, min_runs):
     flaky_tests = run_analysis(store, min_runs=min_runs)
 
     if fmt == "json":
-        click.echo(json_report.report_flaky(flaky_tests))
+        output = json_report.report_flaky(flaky_tests)
     elif fmt == "markdown":
-        click.echo(markdown.report_flaky(flaky_tests))
+        output = markdown.report_flaky(flaky_tests)
     elif fmt == "html":
-        click.echo(html_report.report_flaky(flaky_tests))
+        output = html_report.report_flaky(flaky_tests)
+    else:
+        output = None
+
+    if output is not None:
+        if output_path:
+            Path(output_path).write_text(output)
+            click.echo(f"Report written to {output_path}")
+        else:
+            click.echo(output)
     else:
         if not flaky_tests:
             click.echo("No flaky tests detected.")
@@ -139,13 +149,15 @@ def analyze(ctx, fmt, min_runs):
 @click.argument("path", type=click.Path(exists=True))
 @click.option("--run-id", default=None)
 @click.option("--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text")
-def report(path, run_id, fmt):
+@click.option("-o", "--output", "output_path", type=click.Path(), default=None, help="Write output to file instead of stdout.")
+def report(path, run_id, fmt, output_path):
     """One-shot: parse and report without storing (stateless mode)."""
     from flakydetector.reporters import html_report, json_report, markdown
 
     path = Path(path)
     run_id = run_id or str(uuid.uuid4())[:8]
     files = _collect_files(path)
+    output_parts = []
 
     for f in files:
         parser = _auto_detect_parser(f)
@@ -156,11 +168,11 @@ def report(path, run_id, fmt):
         fingerprint_results(summary.results)
 
         if fmt == "json":
-            click.echo(json_report.report_run(summary))
+            output_parts.append(json_report.report_run(summary))
         elif fmt == "markdown":
-            click.echo(markdown.report_run(summary))
+            output_parts.append(markdown.report_run(summary))
         elif fmt == "html":
-            click.echo(html_report.report_run(summary))
+            output_parts.append(html_report.report_run(summary))
         else:
             click.echo(f"\n=== {f.name} ({summary.source}) ===")
             click.echo(
@@ -178,6 +190,14 @@ def report(path, run_id, fmt):
                     for t in tests:
                         msg = (t.error_message or "")[:80]
                         click.echo(f"    - {t.fqn}: {msg}")
+
+    if output_parts:
+        combined = "\n".join(output_parts)
+        if output_path:
+            Path(output_path).write_text(combined)
+            click.echo(f"Report written to {output_path}")
+        else:
+            click.echo(combined)
 
 
 @main.command()

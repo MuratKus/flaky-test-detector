@@ -45,6 +45,9 @@ packages = ["src/flakydetector"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
+]
 
 [tool.ruff]
 target-version = "py311"

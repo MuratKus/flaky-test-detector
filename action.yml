@@ -24,6 +24,12 @@ inputs:
   comment-on-pr:
     description: "Post markdown report as a PR comment"
     default: "true"
+  html-report-path:
+    description: "File path for the self-contained HTML report artifact"
+    default: "flaky-report.html"
+  upload-html-artifact:
+    description: "Upload the HTML report as a build artifact"
+    default: "true"
   python-version:
     description: "Python version to use"
     default: "3.11"
@@ -38,6 +44,9 @@ outputs:
   total-tests:
     description: "Total tests parsed (report mode)"
     value: ${{ steps.detect.outputs.total_tests }}
+  html-report-path:
+    description: "Path to the generated HTML report file"
+    value: ${{ steps.detect.outputs.html_report_path }}
 
 runs:
   using: "composite"
@@ -60,6 +69,7 @@ runs:
         INPUT_RUN_ID: ${{ inputs.run-id || format('{0}-{1}', github.run_id, github.run_attempt) }}
         INPUT_DB_PATH: ${{ inputs.db-path }}
         INPUT_MIN_RUNS: ${{ inputs.min-runs }}
+        INPUT_HTML_REPORT_PATH: ${{ inputs.html-report-path }}
       run: python "${{ github.action_path }}/action/entrypoint.py"
 
     - name: Comment on PR
@@ -97,3 +107,12 @@ runs:
               body,
             });
           }
+
+    - name: Upload HTML report
+      if: >-
+        inputs.upload-html-artifact == 'true'
+        && steps.detect.outputs.html_report_path != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: flaky-test-report
+        path: ${{ steps.detect.outputs.html_report_path }}
