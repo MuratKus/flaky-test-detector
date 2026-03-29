@@ -1,76 +1,286 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Test Run Summary</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-         margin: 0; padding: 2rem; background: #f8f9fa; color: #212529; }
-  h1 { margin-top: 0; }
-  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-  th, td { border: 1px solid #dee2e6; padding: 0.5rem 0.75rem; text-align: left; }
-  th { background: #e9ecef; }
-  .badge { display: inline-block; padding: 0.2em 0.6em; border-radius: 4px;
-            font-size: 0.85em; font-weight: 600; color: #fff; }
-  .badge-quarantine { background: #dc3545; }
-  .badge-investigate { background: #fd7e14; }
-  .badge-monitor { background: #0d6efd; }
-  .chart-container { display: inline-block; margin: 1rem 0; }
-  .summary-cards { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
-  .card { background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
-           padding: 1rem 1.5rem; min-width: 100px; text-align: center; }
-  .card-value { font-size: 1.8rem; font-weight: 700; }
-  .card-label { font-size: 0.85rem; color: #6c757d; }
-  .fp-group { background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
-               padding: 1rem; margin: 0.75rem 0; }
-  .fp-header { font-weight: 600; margin-bottom: 0.5rem; }
-  .empty { color: #6c757d; font-style: italic; padding: 2rem 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0b1326; color: #dae2fd;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  }
+  main { width: 100%; max-width: 90rem; padding: 4rem 2.5rem 3rem; }
+  code, .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+  .font-headline { font-family: 'Space Grotesk', 'Inter', sans-serif; }
+
+  /* Brand & header */
+  .brand { color: #adc6ff; font-weight: 700; font-size: 1.25rem;
+            font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.03em; margin-bottom: 1rem; }
+  .subtitle { color: #adc6ff; font-family: 'JetBrains Mono', monospace;
+               font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em;
+               font-weight: 500; margin-bottom: 0.5rem; }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 2.5rem;
+        font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+  h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.125rem;
+        font-weight: 700; color: #dae2fd; display: flex; align-items: center; gap: 0.5rem; }
+  .timestamp { font-size: 0.875rem; color: #c2c6d6; opacity: 0.7;
+                font-family: 'JetBrains Mono', monospace; margin-top: 0.25rem; }
+  .header-row { display: flex; flex-wrap: wrap; justify-content: space-between;
+                 align-items: flex-end; gap: 1.5rem; margin-bottom: 2.5rem; }
+
+  /* Tags */
+  .tag { display: inline-block; padding: 0.15em 0.5em; border-radius: 0.25rem;
+          font-size: 0.625rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+          text-transform: uppercase; letter-spacing: -0.02em;
+          border: 1px solid #42475433; margin-right: 0.5rem; }
+  .tag-primary { background: #2d3449; color: #adc6ff; }
+  .tag-muted { background: #060e20; color: #c2c6d6; }
+
+  /* Summary cards */
+  .summary-cards { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .card { background: #131b2e; border-radius: 0.5rem;
+           padding: 1.25rem; min-width: 110px; border-left: 4px solid transparent;
+           flex: 1; }
+  .card-label { font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+                 letter-spacing: 0.15em; margin-bottom: 0.25rem; }
+  .card-value { font-size: 2.25rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
+  .card-bar { height: 4px; width: 100%; background: #171f33;
+               border-radius: 9999px; overflow: hidden; margin-top: 1rem; }
+  .card-bar-fill { height: 100%; border-radius: 9999px; }
+
+  /* Section containers */
+  .section { background: #131b2e; border-radius: 0.75rem;
+              padding: 1.5rem; margin-bottom: 3rem; position: relative; overflow: hidden; }
+  .section-alt { background: #171f33; border-radius: 0.75rem;
+                  overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); margin-bottom: 3rem; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+  .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.125rem; font-weight: 600;
+                    display: flex; align-items: center; gap: 0.5rem; }
+  .section-badge { font-size: 0.625rem; font-family: 'JetBrains Mono', monospace;
+                    color: #8c909f; padding: 0.25em 0.5em;
+                    background: #171f33; border-radius: 0.25rem; }
+
+  /* Impact distribution bars */
+  .bar-row { margin-bottom: 1.5rem; }
+  .bar-row:last-child { margin-bottom: 0; }
+  .bar-meta { display: flex; justify-content: space-between; align-items: baseline;
+               font-size: 0.6875rem; font-family: 'JetBrains Mono', monospace;
+               color: #8c909f; margin-bottom: 0.5rem; }
+  .bar-track { height: 8px; background: #2d3449; border-radius: 9999px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 9999px; }
+
+  /* Table */
+  .table-header { padding: 1.5rem; border-bottom: 1px solid #4247541a;
+                   background: #222a3d4d;
+                   display: flex; align-items: center; justify-content: space-between; }
+  .table-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.125rem; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.15em;
+        color: #8c909f; font-weight: 600; text-align: left;
+        padding: 1rem 1.5rem; background: #222a3d80; }
+  td { padding: 1rem 1.5rem; border-bottom: 1px solid #4247540d;
+        font-size: 0.875rem; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover { background: #222a3d66; }
+  .test-name { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+                color: #dae2fd; }
+  .flakiness-pct { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.9rem; }
+  .runs-count { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: #8c909f; }
+  .td-name { display: flex; align-items: center; gap: 0.75rem; }
+
+  /* Pass/fail mini bar */
+  .pf-container { display: flex; align-items: center; gap: 0.5rem; }
+  .pf-bar { display: flex; height: 6px; width: 6rem; background: #2d3449;
+             border-radius: 9999px; overflow: hidden; }
+  .pf-pass { height: 100%; }
+  .pf-fail { height: 100%; }
+  .pf-text { font-size: 0.625rem; font-family: 'JetBrains Mono', monospace; color: #8c909f; }
+
+  /* Action badges */
+  .badge { display: inline-block; padding: 0.25em 0.5em; border-radius: 0.25rem;
+            font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: -0.02em; }
+  .badge-quarantine { background: #ffb4ab1a; color: #ffb4ab;
+                       border: 1px solid #ffb4ab33; }
+  .badge-investigate { background: #fbbf241a; color: #fbbf24;
+                        border: 1px solid #fbbf2433; }
+  .badge-monitor { background: #adc6ff1a; color: #adc6ff;
+                    border: 1px solid #adc6ff33; }
+
+  /* Status icons (unicode fallback for Material Symbols) */
+  .icon { display: inline-flex; align-items: center; justify-content: center;
+           width: 20px; height: 20px; font-size: 14px; flex-shrink: 0; }
+  .icon-quarantine { color: #ffb4ab; }
+  .icon-investigate { color: #fbbf24; }
+  .icon-monitor { color: #adc6ff; }
+
+  /* Donut chart */
+  .chart-wrapper { display: flex; align-items: center; justify-content: center;
+                    background: #131b2e; border-radius: 0.5rem; padding: 1.5rem; }
+  .donut-label { position: absolute; inset: 0; display: flex; flex-direction: column;
+                  align-items: center; justify-content: center; pointer-events: none; }
+  .donut-pct { font-size: 1.5rem; font-family: 'Space Grotesk', sans-serif;
+                font-weight: 700; color: #dae2fd; line-height: 1; }
+  .donut-sub { font-size: 0.625rem; font-weight: 700; color: #c2c6d6;
+                text-transform: uppercase; letter-spacing: -0.02em; }
+
+  /* Summary grid (run report) */
+  .summary-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 3rem; }
+  @media (min-width: 1024px) {
+    .summary-grid { grid-template-columns: 9fr 3fr; }
+  }
+  .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  @media (min-width: 640px) {
+    .cards-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1280px) {
+    .cards-grid { grid-template-columns: repeat(5, 1fr); }
+  }
+
+  /* Failure groups */
+  .fp-group { background: #171f33; border-radius: 0.75rem;
+               overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+               margin-bottom: 1.5rem; }
+  .fp-header { display: flex; justify-content: space-between; align-items: center;
+                padding: 1rem 1.5rem; background: #222a3d;
+                border-bottom: 1px solid #4247541a; }
+  .fp-header-left { display: flex; align-items: center; gap: 1rem; }
+  .fp-id { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700;
+            color: #adc6ff; background: #2d3449;
+            padding: 0.25em 0.5em; border-radius: 0.25rem; }
+  .fp-title { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem;
+               font-weight: 500; color: #dae2fd; }
+  .fp-count { font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+               letter-spacing: 0.08em; padding: 0.3em 0.75em; border-radius: 9999px; }
+  .fp-count-fail { background: #93000a; color: #ffdad6; }
+  .fp-count-error { background: #92400e; color: #fef3c7; }
+  .fp-body { padding: 1.5rem; }
+  .fp-label { font-size: 0.625rem; font-weight: 700; color: #c2c6d6;
+               text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem; }
+  .fp-tests { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+  .fp-test { display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem;
+              font-family: 'JetBrains Mono', monospace; color: #dae2fd;
+              background: #060e20; padding: 0.5rem;
+              border-radius: 0.25rem; }
+  .fp-test-fail { border-left: 2px solid #ffb4ab; }
+  .fp-test-error { border-left: 2px solid #fbbf24; }
+  .fp-test-icon-fail { color: #ffb4ab; font-size: 1rem; }
+  .fp-test-icon-error { color: #fbbf24; font-size: 1rem; }
+  .fp-snippet { background: #060e20; padding: 1rem;
+                 border-radius: 0.25rem; margin-top: 0.75rem; }
+  .fp-snippet-fail { border-left: 4px solid #ffb4ab4d; }
+  .fp-snippet-error { border-left: 4px solid #fbbf244d; }
+  .fp-snippet-label { font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+                       letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+  .fp-snippet-label-fail { color: #ffb4ab; }
+  .fp-snippet-label-error { color: #fbbf24; }
+  .fp-snippet code { font-size: 0.875rem; font-family: 'JetBrains Mono', monospace;
+                      line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+  .fp-snippet-fail code { color: #ffb4abe6; }
+  .fp-snippet-error code { color: #fbbf24e6; }
+
+  /* Footer */
+  .footer { width: 100%; max-width: 90rem; display: flex; flex-wrap: wrap;
+             justify-content: space-between; align-items: center;
+             padding: 1.5rem 1.5rem; margin-top: auto; gap: 1rem;
+             font-family: 'JetBrains Mono', monospace; font-size: 0.625rem;
+             text-transform: uppercase; letter-spacing: 0.15em; color: #8c909f; }
+  .footer strong { color: #8c909f; font-weight: 700; }
+  .footer a { color: #adc6ff; text-decoration: none; }
+
+  /* Muted text helper */
+  .text-muted { color: #c2c6d6; }
+  .text-sm { font-size: 0.875rem; font-weight: 400; }
 </style>
 </head>
 <body>
+<main>
+<div class="header-row">
+<div>
+<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem"><span class="tag tag-primary">ci-run-4287</span><span class="tag tag-muted">junit_xml</span></div>
 <h1>Test Run Summary</h1>
-<p><strong>Run:</strong> ci-run-4287 | <strong>Source:</strong> junit_xml</p>
-<div class="summary-cards">
-<div class="card"><div class="card-value" style="color:#212529">29</div><div class="card-label">Total</div></div>
-<div class="card"><div class="card-value" style="color:#28a745">23</div><div class="card-label">Passed</div></div>
-<div class="card"><div class="card-value" style="color:#dc3545">3</div><div class="card-label">Failed</div></div>
-<div class="card"><div class="card-value" style="color:#fd7e14">1</div><div class="card-label">Errors</div></div>
-<div class="card"><div class="card-value" style="color:#6c757d">2</div><div class="card-label">Skipped</div></div>
+<p class="timestamp">Executed at 2026-03-28 22:12:10 UTC</p>
 </div>
-<div class="chart-container">
-<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" role="img" aria-label="Test outcome chart">
-  <circle cx="80.0" cy="80.0" r="60" fill="none" stroke="#28a745" stroke-width="20" stroke-dasharray="298.99 78.00" stroke-dashoffset="0.00" transform="rotate(-90 80.0 80.0)" />
-  <circle cx="80.0" cy="80.0" r="60" fill="none" stroke="#dc3545" stroke-width="20" stroke-dasharray="39.00 337.99" stroke-dashoffset="-298.99" transform="rotate(-90 80.0 80.0)" />
-  <circle cx="80.0" cy="80.0" r="60" fill="none" stroke="#fd7e14" stroke-width="20" stroke-dasharray="13.00 363.99" stroke-dashoffset="-337.99" transform="rotate(-90 80.0 80.0)" />
-  <circle cx="80.0" cy="80.0" r="60" fill="none" stroke="#6c757d" stroke-width="20" stroke-dasharray="26.00 350.99" stroke-dashoffset="-350.99" transform="rotate(-90 80.0 80.0)" />
-  <text x="80.0" y="80.0" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="700">29</text>
-</svg>
 </div>
-<h2>Failures (4 total, 4 unique root cause(s))</h2>
+<div class="summary-grid">
+<div class="cards-grid">
+<div class="card" style="border-left-color:#c2c6d6"><div class="card-label" style="color:#c2c6d6">Total</div><div class="card-value" style="color:#c2c6d6">29</div><div class="card-bar"><div class="card-bar-fill" style="width:100%;background:#c2c6d6"></div></div></div>
+<div class="card" style="border-left-color:#4edea3"><div class="card-label" style="color:#4edea3">Passed</div><div class="card-value" style="color:#4edea3">23</div><div class="card-bar"><div class="card-bar-fill" style="width:79%;background:#4edea3"></div></div></div>
+<div class="card" style="border-left-color:#ffb4ab"><div class="card-label" style="color:#ffb4ab">Failed</div><div class="card-value" style="color:#ffb4ab">3</div><div class="card-bar"><div class="card-bar-fill" style="width:10%;background:#ffb4ab"></div></div></div>
+<div class="card" style="border-left-color:#fbbf24"><div class="card-label" style="color:#fbbf24">Errors</div><div class="card-value" style="color:#fbbf24">1</div><div class="card-bar"><div class="card-bar-fill" style="width:3%;background:#fbbf24"></div></div></div>
+<div class="card" style="border-left-color:#8c909f"><div class="card-label" style="color:#8c909f">Skipped</div><div class="card-value" style="color:#8c909f">2</div><div class="card-bar"><div class="card-bar-fill" style="width:7%;background:#8c909f"></div></div></div>
+</div>
+<div class="chart-wrapper"><div style="position:relative;width:160px;height:160px"><svg viewBox="0 0 36 36" style="width:100%;height:100%;transform:rotate(-90deg)"><circle cx="18" cy="18" r="16" fill="none" stroke="#171f33" stroke-width="3.5" /><circle cx="18" cy="18" r="16" fill="none" stroke="#4edea3" stroke-width="3.5" stroke-dasharray="79.3, 100" stroke-dashoffset="0.0" />
+<circle cx="18" cy="18" r="16" fill="none" stroke="#ffb4ab" stroke-width="3.5" stroke-dasharray="10.3, 100" stroke-dashoffset="-79.3" />
+<circle cx="18" cy="18" r="16" fill="none" stroke="#fbbf24" stroke-width="3.5" stroke-dasharray="3.4, 100" stroke-dashoffset="-89.7" />
+<circle cx="18" cy="18" r="16" fill="none" stroke="#8c909f" stroke-width="3.5" stroke-dasharray="6.9, 100" stroke-dashoffset="-93.1" /></svg><div class="donut-label"><span class="donut-pct">79%</span><span class="donut-sub">Success</span></div></div></div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem"><h2><span style="color:#ffb4ab">&#x26A0;</span> Failure Groups <span class="text-muted text-sm">(4 instance(s) across 4 pattern(s))</span></h2></div>
 <div class="fp-group">
-<div class="fp-header">Root cause: <code>dd45db70ecb029d8</code> &mdash; 1 test(s)</div>
-<ul>
-<li><code>com.acme.auth.LoginServiceTest.testLoginTimeout</code>: Expected response within 5000ms but timed out after 5012ms</li>
-</ul>
+<div class="fp-header"><div class="fp-header-left"><span class="fp-id">ID: dd45db70</span><span class="fp-title">Expected response within 5000ms but timed out after 5012ms</span></div><div><span class="fp-count fp-count-fail">1 Failure(s)</span></div></div>
+<div class="fp-body">
+<div class="fp-label">Affected Tests</div>
+<div class="fp-tests">
+<div class="fp-test fp-test-fail"><span class="fp-test-icon-fail">✕</span>com.acme.auth.LoginServiceTest.testLoginTimeout</div>
 </div>
-<div class="fp-group">
-<div class="fp-header">Root cause: <code>0cdf2bdb9f3f1dd3</code> &mdash; 1 test(s)</div>
-<ul>
-<li><code>com.acme.cart.CheckoutTest.testCheckoutWithPromoCode</code>: AssertionError: expected total 89.99 but got 99.99</li>
-</ul>
+<div class="fp-snippet fp-snippet-fail"><div class="fp-snippet-label fp-snippet-label-fail">Error Message Snippet</div><code>java.util.concurrent.TimeoutException: Timeout waiting for response
+	at com.acme.auth.HttpClient.send(HttpClient.java:142)
+	at com.acme.auth.LoginService.authenticate(LoginService.java:67)
+	at com.acme.auth.LoginServiceTest.testLoginTimeout(LoginServiceTest.java:89)</code></div>
 </div>
-<div class="fp-group">
-<div class="fp-header">Root cause: <code>9652c2d150538523</code> &mdash; 1 test(s)</div>
-<ul>
-<li><code>com.acme.inventory.StockServiceTest.testConcurrentReservation</code>: org.postgresql.util.PSQLException: deadlock detected</li>
-</ul>
 </div>
 <div class="fp-group">
-<div class="fp-header">Root cause: <code>7c88ebf4d1ae12dd</code> &mdash; 1 test(s)</div>
-<ul>
-<li><code>com.acme.notification.WebhookServiceTest.testWebhookDelivery</code>: java.net.ConnectException: Connection refused (localhost:9999)</li>
-</ul>
+<div class="fp-header"><div class="fp-header-left"><span class="fp-id">ID: 0cdf2bdb</span><span class="fp-title">AssertionError: expected total 89.99 but got 99.99</span></div><div><span class="fp-count fp-count-fail">1 Failure(s)</span></div></div>
+<div class="fp-body">
+<div class="fp-label">Affected Tests</div>
+<div class="fp-tests">
+<div class="fp-test fp-test-fail"><span class="fp-test-icon-fail">✕</span>com.acme.cart.CheckoutTest.testCheckoutWithPromoCode</div>
+</div>
+<div class="fp-snippet fp-snippet-fail"><div class="fp-snippet-label fp-snippet-label-fail">Error Message Snippet</div><code>java.lang.AssertionError: expected:&lt;89.99&gt; but was:&lt;99.99&gt;
+	at org.junit.Assert.assertEquals(Assert.java:115)
+	at com.acme.cart.CheckoutTest.testCheckoutWithPromoCode(CheckoutTest.java:134)</code></div>
+</div>
+</div>
+<div class="fp-group">
+<div class="fp-header"><div class="fp-header-left"><span class="fp-id">ID: 9652c2d1</span><span class="fp-title">org.postgresql.util.PSQLException: deadlock detected</span></div><div><span class="fp-count fp-count-fail">1 Failure(s)</span></div></div>
+<div class="fp-body">
+<div class="fp-label">Affected Tests</div>
+<div class="fp-tests">
+<div class="fp-test fp-test-fail"><span class="fp-test-icon-fail">✕</span>com.acme.inventory.StockServiceTest.testConcurrentReservation</div>
+</div>
+<div class="fp-snippet fp-snippet-fail"><div class="fp-snippet-label fp-snippet-label-fail">Error Message Snippet</div><code>org.postgresql.util.PSQLException: ERROR: deadlock detected
+  Detail: Process 1234 waits for ShareLock on transaction 5678
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2553)
+	at com.acme.inventory.StockService.reserve(StockService.java:88)</code></div>
+</div>
+</div>
+<div class="fp-group">
+<div class="fp-header"><div class="fp-header-left"><span class="fp-id">ID: 7c88ebf4</span><span class="fp-title">java.net.ConnectException: Connection refused (localhost:9999)</span></div><div><span class="fp-count fp-count-error">1 Error(s)</span></div></div>
+<div class="fp-body">
+<div class="fp-label">Affected Tests</div>
+<div class="fp-tests">
+<div class="fp-test fp-test-error"><span class="fp-test-icon-error">●</span>com.acme.notification.WebhookServiceTest.testWebhookDelivery</div>
+</div>
+<div class="fp-snippet fp-snippet-error"><div class="fp-snippet-label fp-snippet-label-error">Error Message Snippet</div><code>java.net.ConnectException: Connection refused (Connection refused)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:196)
+	at com.acme.notification.WebhookClient.deliver(WebhookClient.java:45)
+	at com.acme.notification.WebhookServiceTest.testWebhookDelivery(WebhookServiceTest.java:78)</code></div>
+</div>
+</div>
+</main>
+<div class="footer">
+  <div style="display:flex;align-items:center;gap:1.5rem">
+    <strong>flaky-test-detector</strong>
+    <span>v0.1.0</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.5rem">
+    <span>&copy; 2026 flaky-test-detector</span>
+    <span style="opacity:0.3;margin:0 0.25rem">|</span>
+    <span>Generated: 2026-03-28 22:12:10 UTC</span>
+  </div>
 </div>
 </body>
 </html>

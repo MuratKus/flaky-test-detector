@@ -33,23 +33,26 @@ Commits: `359b7f1`, `1798e1e`, `7765d51`
 ### 7a: Sample Report & Visuals
 - [x] Generate sample HTML reports from demo fixtures (`scripts/generate_sample_reports.py`)
 - [x] Sample reports in `docs/` (run summary + flaky analysis)
+- [x] Dark theme redesign — Space Grotesk / Inter / JetBrains Mono typography, design-matched color palette
+- [x] Distinct error vs failure colors (amber for errors, red/coral for failures)
+- [x] Pass/fail mini bars, impact distribution bar chart, SVG donut with success %
+- [x] Failure groups with fingerprint ID badges, count pills, stacktrace snippets
 - [ ] Add a screenshot/preview image of the HTML report to README
 - [ ] Add terminal output examples (CLI screenshot or styled code blocks)
-- [ ] **[Human]** Redesign HTML report styling (AI design studio — v0, Figma, etc.)
-  - [ ] **[Human]** Second design pass: remove sidebar nav, "Re-Run Job" button, "Share Report", "Clear All" (not possible in static HTML)
-  - [ ] Implement dark theme with slate/green/red palette from design
-  - [ ] Add health score metric to reports (passed/total for run, non-flaky/total for analysis)
-  - [ ] Add inline JS: test name filter/search in flaky table
-  - [ ] Add inline JS: "Export JSON" button (serialize page data to download)
-  - [ ] Add "View in CI" link placeholder (optional `--ci-url` CLI flag)
+- [ ] Add inline JS: test name filter/search in flaky table
+- [ ] Add inline JS: "Export JSON" button (serialize page data to download)
+- [ ] Add `--ci-url` CLI flag for "View in CI" link in reports
 
-### 7b: Improvement Ideas
+### 7b: Improvements
 - [x] Configurable thresholds (`--threshold`, `--quarantine-at`, `--investigate-at` CLI flags)
 - [ ] Trend tracking (flakiness over time, not just current snapshot)
 - [ ] CI artifact auto-upload in the GitHub Action
 - [ ] PyPI-ready packaging (`uv build` + publish workflow)
 - [ ] Contributing guide
 - [ ] Changelog
+
+### Design brief
+See `docs/DESIGN-BRIEF.md` for the full design context (users, constraints, components).
 
 ---
 

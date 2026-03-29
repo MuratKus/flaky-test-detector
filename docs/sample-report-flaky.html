@@ -1,75 +1,259 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flaky Test Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-         margin: 0; padding: 2rem; background: #f8f9fa; color: #212529; }
-  h1 { margin-top: 0; }
-  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-  th, td { border: 1px solid #dee2e6; padding: 0.5rem 0.75rem; text-align: left; }
-  th { background: #e9ecef; }
-  .badge { display: inline-block; padding: 0.2em 0.6em; border-radius: 4px;
-            font-size: 0.85em; font-weight: 600; color: #fff; }
-  .badge-quarantine { background: #dc3545; }
-  .badge-investigate { background: #fd7e14; }
-  .badge-monitor { background: #0d6efd; }
-  .chart-container { display: inline-block; margin: 1rem 0; }
-  .summary-cards { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
-  .card { background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
-           padding: 1rem 1.5rem; min-width: 100px; text-align: center; }
-  .card-value { font-size: 1.8rem; font-weight: 700; }
-  .card-label { font-size: 0.85rem; color: #6c757d; }
-  .fp-group { background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
-               padding: 1rem; margin: 0.75rem 0; }
-  .fp-header { font-weight: 600; margin-bottom: 0.5rem; }
-  .empty { color: #6c757d; font-style: italic; padding: 2rem 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0b1326; color: #dae2fd;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  }
+  main { width: 100%; max-width: 90rem; padding: 4rem 2.5rem 3rem; }
+  code, .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+  .font-headline { font-family: 'Space Grotesk', 'Inter', sans-serif; }
+
+  /* Brand & header */
+  .brand { color: #adc6ff; font-weight: 700; font-size: 1.25rem;
+            font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.03em; margin-bottom: 1rem; }
+  .subtitle { color: #adc6ff; font-family: 'JetBrains Mono', monospace;
+               font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em;
+               font-weight: 500; margin-bottom: 0.5rem; }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 2.5rem;
+        font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+  h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.125rem;
+        font-weight: 700; color: #dae2fd; display: flex; align-items: center; gap: 0.5rem; }
+  .timestamp { font-size: 0.875rem; color: #c2c6d6; opacity: 0.7;
+                font-family: 'JetBrains Mono', monospace; margin-top: 0.25rem; }
+  .header-row { display: flex; flex-wrap: wrap; justify-content: space-between;
+                 align-items: flex-end; gap: 1.5rem; margin-bottom: 2.5rem; }
+
+  /* Tags */
+  .tag { display: inline-block; padding: 0.15em 0.5em; border-radius: 0.25rem;
+          font-size: 0.625rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+          text-transform: uppercase; letter-spacing: -0.02em;
+          border: 1px solid #42475433; margin-right: 0.5rem; }
+  .tag-primary { background: #2d3449; color: #adc6ff; }
+  .tag-muted { background: #060e20; color: #c2c6d6; }
+
+  /* Summary cards */
+  .summary-cards { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .card { background: #131b2e; border-radius: 0.5rem;
+           padding: 1.25rem; min-width: 110px; border-left: 4px solid transparent;
+           flex: 1; }
+  .card-label { font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+                 letter-spacing: 0.15em; margin-bottom: 0.25rem; }
+  .card-value { font-size: 2.25rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
+  .card-bar { height: 4px; width: 100%; background: #171f33;
+               border-radius: 9999px; overflow: hidden; margin-top: 1rem; }
+  .card-bar-fill { height: 100%; border-radius: 9999px; }
+
+  /* Section containers */
+  .section { background: #131b2e; border-radius: 0.75rem;
+              padding: 1.5rem; margin-bottom: 3rem; position: relative; overflow: hidden; }
+  .section-alt { background: #171f33; border-radius: 0.75rem;
+                  overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); margin-bottom: 3rem; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+  .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.125rem; font-weight: 600;
+                    display: flex; align-items: center; gap: 0.5rem; }
+  .section-badge { font-size: 0.625rem; font-family: 'JetBrains Mono', monospace;
+                    color: #8c909f; padding: 0.25em 0.5em;
+                    background: #171f33; border-radius: 0.25rem; }
+
+  /* Impact distribution bars */
+  .bar-row { margin-bottom: 1.5rem; }
+  .bar-row:last-child { margin-bottom: 0; }
+  .bar-meta { display: flex; justify-content: space-between; align-items: baseline;
+               font-size: 0.6875rem; font-family: 'JetBrains Mono', monospace;
+               color: #8c909f; margin-bottom: 0.5rem; }
+  .bar-track { height: 8px; background: #2d3449; border-radius: 9999px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 9999px; }
+
+  /* Table */
+  .table-header { padding: 1.5rem; border-bottom: 1px solid #4247541a;
+                   background: #222a3d4d;
+                   display: flex; align-items: center; justify-content: space-between; }
+  .table-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.125rem; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.15em;
+        color: #8c909f; font-weight: 600; text-align: left;
+        padding: 1rem 1.5rem; background: #222a3d80; }
+  td { padding: 1rem 1.5rem; border-bottom: 1px solid #4247540d;
+        font-size: 0.875rem; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover { background: #222a3d66; }
+  .test-name { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+                color: #dae2fd; }
+  .flakiness-pct { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.9rem; }
+  .runs-count { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: #8c909f; }
+  .td-name { display: flex; align-items: center; gap: 0.75rem; }
+
+  /* Pass/fail mini bar */
+  .pf-container { display: flex; align-items: center; gap: 0.5rem; }
+  .pf-bar { display: flex; height: 6px; width: 6rem; background: #2d3449;
+             border-radius: 9999px; overflow: hidden; }
+  .pf-pass { height: 100%; }
+  .pf-fail { height: 100%; }
+  .pf-text { font-size: 0.625rem; font-family: 'JetBrains Mono', monospace; color: #8c909f; }
+
+  /* Action badges */
+  .badge { display: inline-block; padding: 0.25em 0.5em; border-radius: 0.25rem;
+            font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: -0.02em; }
+  .badge-quarantine { background: #ffb4ab1a; color: #ffb4ab;
+                       border: 1px solid #ffb4ab33; }
+  .badge-investigate { background: #fbbf241a; color: #fbbf24;
+                        border: 1px solid #fbbf2433; }
+  .badge-monitor { background: #adc6ff1a; color: #adc6ff;
+                    border: 1px solid #adc6ff33; }
+
+  /* Status icons (unicode fallback for Material Symbols) */
+  .icon { display: inline-flex; align-items: center; justify-content: center;
+           width: 20px; height: 20px; font-size: 14px; flex-shrink: 0; }
+  .icon-quarantine { color: #ffb4ab; }
+  .icon-investigate { color: #fbbf24; }
+  .icon-monitor { color: #adc6ff; }
+
+  /* Donut chart */
+  .chart-wrapper { display: flex; align-items: center; justify-content: center;
+                    background: #131b2e; border-radius: 0.5rem; padding: 1.5rem; }
+  .donut-label { position: absolute; inset: 0; display: flex; flex-direction: column;
+                  align-items: center; justify-content: center; pointer-events: none; }
+  .donut-pct { font-size: 1.5rem; font-family: 'Space Grotesk', sans-serif;
+                font-weight: 700; color: #dae2fd; line-height: 1; }
+  .donut-sub { font-size: 0.625rem; font-weight: 700; color: #c2c6d6;
+                text-transform: uppercase; letter-spacing: -0.02em; }
+
+  /* Summary grid (run report) */
+  .summary-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 3rem; }
+  @media (min-width: 1024px) {
+    .summary-grid { grid-template-columns: 9fr 3fr; }
+  }
+  .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  @media (min-width: 640px) {
+    .cards-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1280px) {
+    .cards-grid { grid-template-columns: repeat(5, 1fr); }
+  }
+
+  /* Failure groups */
+  .fp-group { background: #171f33; border-radius: 0.75rem;
+               overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+               margin-bottom: 1.5rem; }
+  .fp-header { display: flex; justify-content: space-between; align-items: center;
+                padding: 1rem 1.5rem; background: #222a3d;
+                border-bottom: 1px solid #4247541a; }
+  .fp-header-left { display: flex; align-items: center; gap: 1rem; }
+  .fp-id { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700;
+            color: #adc6ff; background: #2d3449;
+            padding: 0.25em 0.5em; border-radius: 0.25rem; }
+  .fp-title { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem;
+               font-weight: 500; color: #dae2fd; }
+  .fp-count { font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+               letter-spacing: 0.08em; padding: 0.3em 0.75em; border-radius: 9999px; }
+  .fp-count-fail { background: #93000a; color: #ffdad6; }
+  .fp-count-error { background: #92400e; color: #fef3c7; }
+  .fp-body { padding: 1.5rem; }
+  .fp-label { font-size: 0.625rem; font-weight: 700; color: #c2c6d6;
+               text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem; }
+  .fp-tests { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+  .fp-test { display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem;
+              font-family: 'JetBrains Mono', monospace; color: #dae2fd;
+              background: #060e20; padding: 0.5rem;
+              border-radius: 0.25rem; }
+  .fp-test-fail { border-left: 2px solid #ffb4ab; }
+  .fp-test-error { border-left: 2px solid #fbbf24; }
+  .fp-test-icon-fail { color: #ffb4ab; font-size: 1rem; }
+  .fp-test-icon-error { color: #fbbf24; font-size: 1rem; }
+  .fp-snippet { background: #060e20; padding: 1rem;
+                 border-radius: 0.25rem; margin-top: 0.75rem; }
+  .fp-snippet-fail { border-left: 4px solid #ffb4ab4d; }
+  .fp-snippet-error { border-left: 4px solid #fbbf244d; }
+  .fp-snippet-label { font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
+                       letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+  .fp-snippet-label-fail { color: #ffb4ab; }
+  .fp-snippet-label-error { color: #fbbf24; }
+  .fp-snippet code { font-size: 0.875rem; font-family: 'JetBrains Mono', monospace;
+                      line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+  .fp-snippet-fail code { color: #ffb4abe6; }
+  .fp-snippet-error code { color: #fbbf24e6; }
+
+  /* Footer */
+  .footer { width: 100%; max-width: 90rem; display: flex; flex-wrap: wrap;
+             justify-content: space-between; align-items: center;
+             padding: 1.5rem 1.5rem; margin-top: auto; gap: 1rem;
+             font-family: 'JetBrains Mono', monospace; font-size: 0.625rem;
+             text-transform: uppercase; letter-spacing: 0.15em; color: #8c909f; }
+  .footer strong { color: #8c909f; font-weight: 700; }
+  .footer a { color: #adc6ff; text-decoration: none; }
+
+  /* Muted text helper */
+  .text-muted { color: #c2c6d6; }
+  .text-sm { font-size: 0.875rem; font-weight: 400; }
 </style>
 </head>
 <body>
-<h1>Flaky Test Report</h1>
-<p><strong>8 flaky test(s) detected</strong></p>
-<div class="chart-container">
-<svg xmlns="http://www.w3.org/2000/svg" width="780" height="278" role="img" aria-label="Flakiness chart">
-  <text x="212" y="25.599999999999998" text-anchor="end" font-size="12">...oginServiceTest.testLoginTimeout</text>
-  <rect x="220" y="6" width="500.0" height="28" rx="3" fill="#dc3545" />
-  <text x="726.0" y="25.599999999999998" font-size="12" fill="#495057">100%</text>
-  <text x="212" y="59.599999999999994" text-anchor="end" font-size="12">...ceTest.testConcurrentReservation</text>
-  <rect x="220" y="40" width="335.0" height="28" rx="3" fill="#dc3545" />
-  <text x="561.0" y="59.599999999999994" font-size="12" fill="#495057">67%</text>
-  <text x="212" y="93.6" text-anchor="end" font-size="12">...kServiceTest.testWebhookDelivery</text>
-  <rect x="220" y="74" width="300.0" height="28" rx="3" fill="#dc3545" />
-  <text x="526.0" y="93.6" font-size="12" fill="#495057">60%</text>
-  <text x="212" y="127.6" text-anchor="end" font-size="12">...SearchTest.testSearchWithFilters</text>
-  <rect x="220" y="108" width="300.0" height="28" rx="3" fill="#dc3545" />
-  <text x="526.0" y="127.6" font-size="12" fill="#495057">60%</text>
-  <text x="212" y="161.6" text-anchor="end" font-size="12">...utTest.testCheckoutWithPromoCode</text>
-  <rect x="220" y="142" width="250.0" height="28" rx="3" fill="#dc3545" />
-  <text x="476.0" y="161.6" font-size="12" fill="#495057">50%</text>
-  <text x="212" y="195.6" text-anchor="end" font-size="12">...aymentGatewayTest.testChargeCard</text>
-  <rect x="220" y="176" width="200.0" height="28" rx="3" fill="#fd7e14" />
-  <text x="426.0" y="195.6" font-size="12" fill="#495057">40%</text>
-  <text x="212" y="229.6" text-anchor="end" font-size="12">...ileServiceTest.testUpdateProfile</text>
-  <rect x="220" y="210" width="200.0" height="28" rx="3" fill="#fd7e14" />
-  <text x="426.0" y="229.6" font-size="12" fill="#495057">40%</text>
-  <text x="212" y="263.6" text-anchor="end" font-size="12">...ServiceTest.testSendWelcomeEmail</text>
-  <rect x="220" y="244" width="200.0" height="28" rx="3" fill="#fd7e14" />
-  <text x="426.0" y="263.6" font-size="12" fill="#495057">40%</text>
-</svg>
+<main>
+<div class="header-row">
+<div>
+<div class="brand">flaky-test-detector</div>
+<p class="subtitle">Stability Report</p>
+<h1>8 Flaky Test(s) Detected</h1>
 </div>
+<div style="display:flex;gap:1rem">
+<div class="card" style="border-left-color:#ffb4ab;min-width:140px"><div class="card-label" style="color:#c2c6d6">Critical</div><div class="card-value" style="color:#ffb4ab">5</div></div>
+<div class="card" style="border-left-color:#fbbf24;min-width:140px"><div class="card-label" style="color:#c2c6d6">Investigating</div><div class="card-value" style="color:#fbbf24">3</div></div>
+<div class="card" style="border-left-color:#adc6ff;min-width:140px"><div class="card-label" style="color:#c2c6d6">Monitoring</div><div class="card-value" style="color:#adc6ff">0</div></div>
+</div>
+</div>
+<div class="section">
+<div class="section-header">
+<div class="section-title">▁▃▅ Impact Distribution</div>
+<span class="section-badge">SORTED BY % FLAKINESS</span>
+</div>
+<div class="bar-row"><div class="bar-meta"><span>com.acme.auth.LoginServiceTest.testLoginTimeout</span><span style="color:#ffb4ab">100%</span></div><div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#ffb4ab"></div></div></div>
+<div class="bar-row"><div class="bar-meta"><span>com.acme.inventory.StockServiceTest.testConcurrentReservation</span><span style="color:#ffb4ab">67%</span></div><div class="bar-track"><div class="bar-fill" style="width:67.0%;background:#ffb4ab"></div></div></div>
+<div class="bar-row"><div class="bar-meta"><span>com.acme.notification.WebhookServiceTest.testWebhookDelivery</span><span style="color:#ffb4ab">60%</span></div><div class="bar-track"><div class="bar-fill" style="width:60.0%;background:#ffb4ab"></div></div></div>
+<div class="bar-row"><div class="bar-meta"><span>com.acme.search.ProductSearchTest.testSearchWithFilters</span><span style="color:#ffb4ab">60%</span></div><div class="bar-track"><div class="bar-fill" style="width:60.0%;background:#ffb4ab"></div></div></div>
+<div class="bar-row"><div class="bar-meta"><span>com.acme.cart.CheckoutTest.testCheckoutWithPromoCode</span><span style="color:#ffb4ab">50%</span></div><div class="bar-track"><div class="bar-fill" style="width:50.0%;background:#ffb4ab"></div></div></div>
+<div class="bar-row"><div class="bar-meta"><span>com.acme.payment.PaymentGatewayTest.testChargeCard</span><span style="color:#fbbf24">40%</span></div><div class="bar-track"><div class="bar-fill" style="width:40.0%;background:#fbbf24"></div></div></div>
+<div class="bar-row"><div class="bar-meta"><span>com.acme.user.ProfileServiceTest.testUpdateProfile</span><span style="color:#fbbf24">40%</span></div><div class="bar-track"><div class="bar-fill" style="width:40.0%;background:#fbbf24"></div></div></div>
+<div class="bar-row"><div class="bar-meta"><span>com.acme.notification.EmailServiceTest.testSendWelcomeEmail</span><span style="color:#fbbf24">40%</span></div><div class="bar-track"><div class="bar-fill" style="width:40.0%;background:#fbbf24"></div></div></div>
+</div>
+<div class="section-alt">
+<div class="table-header">
+<div class="table-title">Detailed Analysis</div>
+</div>
+<div style="overflow-x:auto">
 <table>
-<thead><tr><th>Test</th><th>Flakiness</th><th>Runs</th><th>Pass/Fail</th><th>Action</th></tr></thead>
+<thead><tr><th>Test Name</th><th>Flakiness %</th><th>Runs</th><th>Pass / Fail</th><th>Recommended Action</th></tr></thead>
 <tbody>
-<tr><td>com.acme.auth.LoginServiceTest.testLoginTimeout</td><td>100%</td><td>12</td><td>6/6</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
-<tr><td>com.acme.inventory.StockServiceTest.testConcurrentReservation</td><td>67%</td><td>12</td><td>4/8</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
-<tr><td>com.acme.notification.WebhookServiceTest.testWebhookDelivery</td><td>60%</td><td>10</td><td>7/3</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
-<tr><td>com.acme.search.ProductSearchTest.testSearchWithFilters</td><td>60%</td><td>10</td><td>3/7</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
-<tr><td>com.acme.cart.CheckoutTest.testCheckoutWithPromoCode</td><td>50%</td><td>8</td><td>6/2</td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
-<tr><td>com.acme.payment.PaymentGatewayTest.testChargeCard</td><td>40%</td><td>10</td><td>8/2</td><td><span class="badge badge-investigate">investigate</span></td></tr>
-<tr><td>com.acme.user.ProfileServiceTest.testUpdateProfile</td><td>40%</td><td>10</td><td>8/2</td><td><span class="badge badge-investigate">investigate</span></td></tr>
-<tr><td>com.acme.notification.EmailServiceTest.testSendWelcomeEmail</td><td>40%</td><td>15</td><td>12/3</td><td><span class="badge badge-investigate">investigate</span></td></tr>
+<tr><td><div class="td-name"><span class="icon icon-quarantine">✖</span><span class="test-name">com.acme.auth.LoginServiceTest.testLoginTimeout</span></div></td><td class="flakiness-pct" style="color:#ffb4ab">100%</td><td class="runs-count">12</td><td><div class="pf-container"><div class="pf-bar"><div class="pf-pass" style="width:50%;background:#4edea3"></div><div class="pf-fail" style="width:50%;background:#ffb4ab"></div></div><span class="pf-text">6P / 6F</span></div></td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td><div class="td-name"><span class="icon icon-quarantine">✖</span><span class="test-name">com.acme.inventory.StockServiceTest.testConcurrentReservation</span></div></td><td class="flakiness-pct" style="color:#ffb4ab">67%</td><td class="runs-count">12</td><td><div class="pf-container"><div class="pf-bar"><div class="pf-pass" style="width:33%;background:#4edea3"></div><div class="pf-fail" style="width:67%;background:#ffb4ab"></div></div><span class="pf-text">4P / 8F</span></div></td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td><div class="td-name"><span class="icon icon-quarantine">✖</span><span class="test-name">com.acme.notification.WebhookServiceTest.testWebhookDelivery</span></div></td><td class="flakiness-pct" style="color:#ffb4ab">60%</td><td class="runs-count">10</td><td><div class="pf-container"><div class="pf-bar"><div class="pf-pass" style="width:70%;background:#4edea3"></div><div class="pf-fail" style="width:30%;background:#ffb4ab"></div></div><span class="pf-text">7P / 3F</span></div></td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td><div class="td-name"><span class="icon icon-quarantine">✖</span><span class="test-name">com.acme.search.ProductSearchTest.testSearchWithFilters</span></div></td><td class="flakiness-pct" style="color:#ffb4ab">60%</td><td class="runs-count">10</td><td><div class="pf-container"><div class="pf-bar"><div class="pf-pass" style="width:30%;background:#4edea3"></div><div class="pf-fail" style="width:70%;background:#ffb4ab"></div></div><span class="pf-text">3P / 7F</span></div></td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td><div class="td-name"><span class="icon icon-quarantine">✖</span><span class="test-name">com.acme.cart.CheckoutTest.testCheckoutWithPromoCode</span></div></td><td class="flakiness-pct" style="color:#ffb4ab">50%</td><td class="runs-count">8</td><td><div class="pf-container"><div class="pf-bar"><div class="pf-pass" style="width:75%;background:#4edea3"></div><div class="pf-fail" style="width:25%;background:#ffb4ab"></div></div><span class="pf-text">6P / 2F</span></div></td><td><span class="badge badge-quarantine">quarantine</span></td></tr>
+<tr><td><div class="td-name"><span class="icon icon-investigate">⌕</span><span class="test-name">com.acme.payment.PaymentGatewayTest.testChargeCard</span></div></td><td class="flakiness-pct" style="color:#fbbf24">40%</td><td class="runs-count">10</td><td><div class="pf-container"><div class="pf-bar"><div class="pf-pass" style="width:80%;background:#4edea3"></div><div class="pf-fail" style="width:20%;background:#fbbf24"></div></div><span class="pf-text">8P / 2F</span></div></td><td><span class="badge badge-investigate">investigate</span></td></tr>
+<tr><td><div class="td-name"><span class="icon icon-investigate">⌕</span><span class="test-name">com.acme.user.ProfileServiceTest.testUpdateProfile</span></div></td><td class="flakiness-pct" style="color:#fbbf24">40%</td><td class="runs-count">10</td><td><div class="pf-container"><div class="pf-bar"><div class="pf-pass" style="width:80%;background:#4edea3"></div><div class="pf-fail" style="width:20%;background:#fbbf24"></div></div><span class="pf-text">8P / 2F</span></div></td><td><span class="badge badge-investigate">investigate</span></td></tr>
+<tr><td><div class="td-name"><span class="icon icon-investigate">⌕</span><span class="test-name">com.acme.notification.EmailServiceTest.testSendWelcomeEmail</span></div></td><td class="flakiness-pct" style="color:#fbbf24">40%</td><td class="runs-count">15</td><td><div class="pf-container"><div class="pf-bar"><div class="pf-pass" style="width:80%;background:#4edea3"></div><div class="pf-fail" style="width:20%;background:#fbbf24"></div></div><span class="pf-text">12P / 3F</span></div></td><td><span class="badge badge-investigate">investigate</span></td></tr>
 </tbody></table>
+</div>
+</div>
+</main>
+<div class="footer">
+  <div style="display:flex;align-items:center;gap:1.5rem">
+    <strong>flaky-test-detector</strong>
+    <span>v0.1.0</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.5rem">
+    <span>&copy; 2026 flaky-test-detector</span>
+    <span style="opacity:0.3;margin:0 0.25rem">|</span>
+    <span>Generated: 2026-03-28 22:12:10 UTC</span>
+  </div>
+</div>
 </body>
 </html>
