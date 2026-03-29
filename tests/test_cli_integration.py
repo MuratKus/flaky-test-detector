@@ -208,6 +208,39 @@ class TestOutputFlag:
         assert "total_flaky" in data
 
 
+class TestCiUrlFlag:
+    """Test --ci-url flag for HTML reports."""
+
+    def test_report_html_with_ci_url(self):
+        result = run_cli(
+            "report", str(FIXTURES / "sample_junit.xml"),
+            "--format", "html",
+            "--ci-url", "https://ci.example.com/run/42",
+        )
+        assert result.returncode == 0
+        assert "View in CI" in result.stdout
+        assert "https://ci.example.com/run/42" in result.stdout
+
+    def test_report_text_ignores_ci_url(self):
+        result = run_cli(
+            "report", str(FIXTURES / "sample_junit.xml"),
+            "--ci-url", "https://ci.example.com/run/42",
+        )
+        assert result.returncode == 0
+        assert "View in CI" not in result.stdout
+
+    def test_analyze_html_with_ci_url(self, tmp_path):
+        db = str(tmp_path / "test.db")
+        run_cli("--db", db, "ingest", str(FIXTURES / "sample_junit.xml"), "--run-id", "r1")
+        result = run_cli(
+            "--db", db, "analyze",
+            "--format", "html",
+            "--ci-url", "https://ci.example.com/run/99",
+        )
+        assert result.returncode == 0
+        assert "<!DOCTYPE html>" in result.stdout
+
+
 class TestErrorCases:
     """Test CLI handles errors gracefully."""
 

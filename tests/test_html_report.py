@@ -213,3 +213,67 @@ class TestHtmlReportRun:
         assert "<!DOCTYPE html>" in output
         # Should not contain failure-related sections
         assert "Failures" not in output or "0 failures" in output.lower()
+
+
+class TestHtmlReportSearchFilter:
+    """Inline JS search/filter for the flaky analysis table."""
+
+    def test_flaky_report_contains_search_input(self):
+        output = html_report.report_flaky(_make_flaky_tests())
+        assert 'id="search-input"' in output
+
+    def test_flaky_report_contains_filter_script(self):
+        output = html_report.report_flaky(_make_flaky_tests())
+        assert "search-input" in output
+        assert "<script>" in output
+
+    def test_empty_flaky_report_has_no_search(self):
+        output = html_report.report_flaky([])
+        assert 'id="search-input"' not in output
+
+
+class TestHtmlReportExportJson:
+    """Inline JS 'Export JSON' button."""
+
+    def test_flaky_report_contains_export_button(self):
+        output = html_report.report_flaky(_make_flaky_tests())
+        assert 'id="export-json"' in output
+
+    def test_flaky_report_export_script_present(self):
+        output = html_report.report_flaky(_make_flaky_tests())
+        assert "export-json" in output
+        assert "application/json" in output
+
+    def test_empty_flaky_report_has_no_export(self):
+        output = html_report.report_flaky([])
+        assert 'id="export-json"' not in output
+
+
+class TestHtmlReportCiUrl:
+    """--ci-url support in both report types."""
+
+    def test_flaky_report_renders_ci_url(self):
+        tests = _make_flaky_tests()
+        output = html_report.report_flaky(tests, ci_url="https://ci.example.com/run/42")
+        assert "https://ci.example.com/run/42" in output
+        assert "View in CI" in output
+
+    def test_flaky_report_no_ci_url_by_default(self):
+        output = html_report.report_flaky(_make_flaky_tests())
+        assert "View in CI" not in output
+
+    def test_run_report_renders_ci_url(self):
+        summary = _make_run_summary()
+        output = html_report.report_run(summary, ci_url="https://ci.example.com/run/99")
+        assert "https://ci.example.com/run/99" in output
+        assert "View in CI" in output
+
+    def test_run_report_no_ci_url_by_default(self):
+        output = html_report.report_run(_make_run_summary())
+        assert "View in CI" not in output
+
+    def test_ci_url_is_escaped(self):
+        tests = _make_flaky_tests()
+        output = html_report.report_flaky(tests, ci_url='https://ci.example.com/<script>')
+        assert "&lt;script&gt;" in output or "%3Cscript%3E" in output
+        assert "<script>" not in output.split("</style>")[-1].split("<script>")[0]

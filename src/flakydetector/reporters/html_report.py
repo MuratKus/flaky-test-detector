@@ -370,7 +370,7 @@ def _donut_chart(passed: int, failed: int, errored: int, skipped: int) -> str:
     )
 
 
-def report_flaky(flaky_tests: list[FlakyTest]) -> str:
+def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> str:
     """Generate a self-contained HTML report of flaky tests."""
     if not flaky_tests:
         body = (
@@ -395,6 +395,14 @@ def report_flaky(flaky_tests: list[FlakyTest]) -> str:
     parts.append('<div class="brand">flaky-test-detector</div>')
     parts.append('<p class="subtitle">Stability Report</p>')
     parts.append(f"<h1>{len(flaky_tests)} Flaky Test(s) Detected</h1>")
+    if ci_url:
+        parts.append(
+            f'<a href="{_escape(ci_url)}" target="_blank" rel="noopener" '
+            f'style="display:inline-flex;align-items:center;gap:0.5rem;margin-top:0.5rem;'
+            f'font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:{c["primary"]};'
+            f'text-decoration:none">'
+            f'&#x2197; View in CI</a>'
+        )
     parts.append("</div>")
 
     # Summary cards
@@ -427,6 +435,24 @@ def report_flaky(flaky_tests: list[FlakyTest]) -> str:
     parts.append('<div class="section-alt">')
     parts.append('<div class="table-header">')
     parts.append('<div class="table-title">Detailed Analysis</div>')
+    parts.append('<div style="display:flex;gap:0.75rem;align-items:center">')
+    parts.append(
+        f'<input id="search-input" type="text" placeholder="Filter tests\u2026"'
+        f' style="background:{c["surface_container"]};color:{c["on_surface"]};'
+        f'border:1px solid {c["outline_variant"]};border-radius:0.375rem;'
+        f'padding:0.375rem 0.75rem;font-size:0.75rem;font-family:\'JetBrains Mono\',monospace;'
+        f'outline:none;width:14rem" />'
+    )
+    parts.append(
+        f'<button id="export-json"'
+        f' style="background:{c["surface_container"]};color:{c["primary"]};'
+        f'border:1px solid {c["outline_variant"]};border-radius:0.375rem;'
+        f'padding:0.375rem 0.75rem;font-size:0.625rem;font-weight:700;'
+        f'font-family:\'JetBrains Mono\',monospace;text-transform:uppercase;'
+        f'letter-spacing:0.08em;cursor:pointer">'
+        f'&#x21E9; Export JSON</button>'
+    )
+    parts.append('</div>')
     parts.append("</div>")
     parts.append('<div style="overflow-x:auto">')
     parts.append("<table>")
@@ -460,11 +486,53 @@ def report_flaky(flaky_tests: list[FlakyTest]) -> str:
     parts.append("</div>")  # overflow wrapper
     parts.append("</div>")  # section-alt
 
+    # Inline JS: search filter + export JSON
+    parts.append("<script>")
+    parts.append("(function(){")
+    # Search filter
+    parts.append(
+        'var input=document.getElementById("search-input");'
+        'var rows=document.querySelectorAll("tbody tr");'
+        'input.addEventListener("input",function(){'
+        'var q=this.value.toLowerCase();'
+        'rows.forEach(function(r){'
+        'var name=r.querySelector(".test-name");'
+        'r.style.display=name&&name.textContent.toLowerCase().indexOf(q)===-1?"none":"";'
+        '});'
+        '});'
+    )
+    # Export JSON
+    parts.append(
+        'document.getElementById("export-json").addEventListener("click",function(){'
+        'var data=[];'
+        'rows.forEach(function(r){'
+        'var name=r.querySelector(".test-name");'
+        'var pct=r.querySelector(".flakiness-pct");'
+        'var runs=r.querySelector(".runs-count");'
+        'var badge=r.querySelector(".badge");'
+        'if(name)data.push({'
+        'test_name:name.textContent,'
+        'flakiness:pct?pct.textContent:"",'
+        'runs:runs?runs.textContent:"",'
+        'action:badge?badge.textContent:""'
+        '});'
+        '});'
+        'var blob=new Blob([JSON.stringify(data,null,2)],'
+        '{type:"application/json"});'
+        'var a=document.createElement("a");'
+        'a.href=URL.createObjectURL(blob);'
+        'a.download="flaky-tests.json";'
+        'a.click();'
+        '});'
+    )
+    parts.append("})();")
+    parts.append("</script>")
+
     parts.append("</main>")
     return _html_shell("Flaky Test Report", "\n".join(parts))
 
 
-def report_run(summary: RunSummary) -> str:
+def report_run(summary: RunSummary, *, ci_url: str | None = None) -> str:
     """Generate a self-contained HTML report of a single test run."""
     c = _C
     parts = ["<main>"]
@@ -480,6 +548,14 @@ def report_run(summary: RunSummary) -> str:
     )
     parts.append('<h1>Test Run Summary</h1>')
     parts.append(f'<p class="timestamp">Executed at {_timestamp()}</p>')
+    if ci_url:
+        parts.append(
+            f'<a href="{_escape(ci_url)}" target="_blank" rel="noopener" '
+            f'style="display:inline-flex;align-items:center;gap:0.5rem;margin-top:0.5rem;'
+            f'font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:{c["primary"]};'
+            f'text-decoration:none">'
+            f'&#x2197; View in CI</a>'
+        )
     parts.append("</div>")
     parts.append("</div>")
 

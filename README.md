@@ -56,12 +56,38 @@ flaky-detect history com.example.LoginTest.testLoginTimeout
 flaky-detect fingerprints
 ```
 
+## HTML Report Preview
+
+The HTML report is a self-contained dark-themed page with SVG charts, pass/fail bars, and failure groups. It includes inline search filtering and JSON export.
+
+> [View sample flaky analysis report](docs/sample-report-flaky.html) ·
+> [View sample run summary report](docs/sample-report-run.html)
+
+<!-- To add a screenshot: save a browser screenshot as docs/report-preview.png and uncomment: -->
+<!-- ![HTML Report Preview](docs/report-preview.png) -->
+
 ## Example Output
 
-```bash
-# Customize flakiness thresholds
-flaky-detect analyze --threshold 0.3 --quarantine-at 0.7 --investigate-at 0.4
+### One-shot report
+
 ```
+$ flaky-detect report build/test-results/
+
+=== sample_junit.xml (junit_xml) ===
+Total: 7 | ✓3 ✗2 ⚠1 ⊘1
+Failures: 3 (3 unique root cause(s))
+
+  [e71ea007e8df4c5a] 1 test(s):
+    - com.example.LoginTest.testLoginTimeout: Expected response within 5000ms
+
+  [dd8a3edadd6d6907] 1 test(s):
+    - com.example.CartTest.testCheckout: NullPointerException at CartService
+
+  [28aba236fcfa3c18] 1 test(s):
+    - com.example.CartTest.testPaymentGateway: Connection refused
+```
+
+### Flakiness analysis
 
 ```
 $ flaky-detect analyze
@@ -69,25 +95,33 @@ $ flaky-detect analyze
 1 flaky test(s) detected:
 
   🚨 com.example.LoginTest.testLoginTimeout
-     flakiness=100%  runs=4  pass/fail=2/2  → quarantine
+     flakiness=67%  runs=3  pass/fail=1/2  → quarantine
      fingerprints: e71ea007e8df4c5a
 ```
 
+```bash
+# Customize flakiness thresholds
+flaky-detect analyze --threshold 0.3 --quarantine-at 0.7 --investigate-at 0.4
 ```
-$ flaky-detect report test-results/ --format markdown
 
-## Test Run Summary
+### Failure fingerprints
 
-**Run:** `run-42` | **Source:** junit_xml
+```
+$ flaky-detect fingerprints
 
-| Total | Passed | Failed | Errors | Skipped |
-|-------|--------|--------|--------|---------|
-| 7     | 3      | 2      | 1      | 1       |
+Top failure root causes (3 distinct):
 
-### Failures (3 total, 3 unique root cause(s))
+  [dd8a3edadd6d] 3 occurrence(s) across 1 test(s)
+    sample: NullPointerException at CartService
+    - com.example.CartTest.testCheckout
 
-**Root cause `e71ea007e8df4c5a`** — 1 test(s):
-- `com.example.LoginTest.testLoginTimeout`: Expected response within 5000ms
+  [28aba236fcfa] 2 occurrence(s) across 1 test(s)
+    sample: Connection refused
+    - com.example.CartTest.testPaymentGateway
+
+  [e71ea007e8df] 2 occurrence(s) across 1 test(s)
+    sample: Expected response within 5000ms
+    - com.example.LoginTest.testLoginTimeout
 ```
 
 ## Supported Formats

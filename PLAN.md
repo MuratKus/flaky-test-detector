@@ -37,11 +37,11 @@ Commits: `359b7f1`, `1798e1e`, `7765d51`
 - [x] Distinct error vs failure colors (amber for errors, red/coral for failures)
 - [x] Pass/fail mini bars, impact distribution bar chart, SVG donut with success %
 - [x] Failure groups with fingerprint ID badges, count pills, stacktrace snippets
-- [ ] Add a screenshot/preview image of the HTML report to README
-- [ ] Add terminal output examples (CLI screenshot or styled code blocks)
-- [ ] Add inline JS: test name filter/search in flaky table
-- [ ] Add inline JS: "Export JSON" button (serialize page data to download)
-- [ ] Add `--ci-url` CLI flag for "View in CI" link in reports
+- [x] Add a screenshot/preview image of the HTML report to README (placeholder + sample report links)
+- [x] Add terminal output examples (CLI screenshot or styled code blocks)
+- [x] Add inline JS: test name filter/search in flaky table
+- [x] Add inline JS: "Export JSON" button (serialize page data to download)
+- [x] Add `--ci-url` CLI flag for "View in CI" link in reports
 
 ### 7b: Improvements
 - [x] Configurable thresholds (`--threshold`, `--quarantine-at`, `--investigate-at` CLI flags)

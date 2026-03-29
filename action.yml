@@ -30,6 +30,9 @@ inputs:
   upload-html-artifact:
     description: "Upload the HTML report as a build artifact"
     default: "true"
+  ci-url:
+    description: "Link to CI run for 'View in CI' in HTML reports (auto-detected from GitHub env)"
+    default: ""
   python-version:
     description: "Python version to use"
     default: "3.11"

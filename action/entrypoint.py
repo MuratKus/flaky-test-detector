@@ -46,9 +46,25 @@ def run_cli(*args: str) -> subprocess.CompletedProcess:
     )
 
 
+def _get_ci_url() -> str | None:
+    """Build the CI run URL from GitHub environment, or from action input."""
+    ci_url = get_input("ci_url") or get_input("ci-url")
+    if ci_url:
+        return ci_url
+    server = os.environ.get("GITHUB_SERVER_URL", "")
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    run_id = os.environ.get("GITHUB_RUN_ID", "")
+    if server and repo and run_id:
+        return f"{server}/{repo}/actions/runs/{run_id}"
+    return None
+
+
 def _write_html_artifact(args_base: list[str]) -> None:
     """Generate an HTML report and write it to a file for artifact upload."""
     html_args = [*args_base, "--format", "html"]
+    ci_url = _get_ci_url()
+    if ci_url:
+        html_args.extend(["--ci-url", ci_url])
     html_result = run_cli(*html_args)
     if html_result.returncode == 0 and html_result.stdout.strip():
         html_path = os.environ.get("INPUT_HTML_REPORT_PATH", "flaky-report.html")

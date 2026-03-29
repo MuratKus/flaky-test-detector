@@ -102,8 +102,9 @@ def ingest(ctx, path, run_id, fmt):
 @click.option("--threshold", default=0.2, type=float, help="Minimum flakiness rate to flag (0.0-1.0).")
 @click.option("--quarantine-at", default=0.5, type=float, help="Flakiness rate at or above which to recommend quarantine.")
 @click.option("--investigate-at", default=0.3, type=float, help="Flakiness rate at or above which to recommend investigation.")
+@click.option("--ci-url", default=None, help="Link to CI run for 'View in CI' in HTML reports.")
 @click.pass_context
-def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investigate_at):
+def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investigate_at, ci_url):
     """Analyze stored results and report flaky tests."""
     from flakydetector.analyzer import Thresholds
     from flakydetector.analyzer import analyze as run_analysis
@@ -122,7 +123,7 @@ def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investiga
     elif fmt == "markdown":
         output = markdown.report_flaky(flaky_tests)
     elif fmt == "html":
-        output = html_report.report_flaky(flaky_tests)
+        output = html_report.report_flaky(flaky_tests, ci_url=ci_url)
     else:
         output = None
 
@@ -159,7 +160,8 @@ def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investiga
 @click.option("--run-id", default=None)
 @click.option("--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text")
 @click.option("-o", "--output", "output_path", type=click.Path(), default=None, help="Write output to file instead of stdout.")
-def report(path, run_id, fmt, output_path):
+@click.option("--ci-url", default=None, help="Link to CI run for 'View in CI' in HTML reports.")
+def report(path, run_id, fmt, output_path, ci_url):
     """One-shot: parse and report without storing (stateless mode)."""
     from flakydetector.reporters import html_report, json_report, markdown
 
@@ -181,7 +183,7 @@ def report(path, run_id, fmt, output_path):
         elif fmt == "markdown":
             output_parts.append(markdown.report_run(summary))
         elif fmt == "html":
-            output_parts.append(html_report.report_run(summary))
+            output_parts.append(html_report.report_run(summary, ci_url=ci_url))
         else:
             click.echo(f"\n=== {f.name} ({summary.source}) ===")
             click.echo(
