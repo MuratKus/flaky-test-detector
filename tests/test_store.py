@@ -70,3 +70,46 @@ class TestStore:
         trend = store.get_test_trend("nonexistent")
         assert trend == []
         store.close()
+
+    def test_get_wasted_duration(self, tmp_path):
+        store = self._make_store(tmp_path)
+        # Run 1: test passes in 2s
+        s1 = RunSummary(run_id="r1", source="test")
+        s1.add(
+            TestResult(
+                name="testFlaky", classname="C", outcome=TestOutcome.PASSED, duration_sec=2.0
+            )
+        )
+        store.ingest(s1)
+        # Run 2: test fails in 3s
+        s2 = RunSummary(run_id="r2", source="test")
+        s2.add(
+            TestResult(
+                name="testFlaky", classname="C", outcome=TestOutcome.FAILED, duration_sec=3.0
+            )
+        )
+        store.ingest(s2)
+        # Run 3: test fails in 4s
+        s3 = RunSummary(run_id="r3", source="test")
+        s3.add(
+            TestResult(
+                name="testFlaky", classname="C", outcome=TestOutcome.FAILED, duration_sec=4.0
+            )
+        )
+        store.ingest(s3)
+
+        wasted = store.get_wasted_duration("C.testFlaky")
+        # Only failed runs count: 3.0 + 4.0 = 7.0
+        assert wasted == 7.0
+        store.close()
+
+    def test_get_wasted_duration_no_failures(self, tmp_path):
+        store = self._make_store(tmp_path)
+        s = RunSummary(run_id="r1", source="test")
+        s.add(
+            TestResult(name="testOk", classname="C", outcome=TestOutcome.PASSED, duration_sec=5.0)
+        )
+        store.ingest(s)
+
+        assert store.get_wasted_duration("C.testOk") == 0.0
+        store.close()

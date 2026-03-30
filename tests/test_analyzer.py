@@ -119,6 +119,29 @@ class TestAnalyzer:
         assert ft.trend_direction != ""
         store.close()
 
+    def test_flaky_test_has_wasted_time(self, tmp_path):
+        """Analyzed flaky tests should include wasted CI time."""
+        store = Store(tmp_path / "test.db")
+        for i in range(6):
+            s = RunSummary(run_id=f"run-{i}", source="test")
+            outcome = TestOutcome.PASSED if i % 2 == 0 else TestOutcome.FAILED
+            s.add(
+                TestResult(
+                    name="testFlaky",
+                    classname="C",
+                    outcome=outcome,
+                    duration_sec=10.0,
+                    fingerprint="fp1" if outcome == TestOutcome.FAILED else None,
+                )
+            )
+            store.ingest(s)
+
+        flaky = analyze(store, min_runs=3)
+        ft = flaky[0]
+        # 3 failed runs * 10s each = 30s wasted
+        assert ft.wasted_time_sec == 30.0
+        store.close()
+
 
 class TestTrendDirection:
     """Test compute_trend_direction in isolation."""

@@ -80,3 +80,46 @@ class TestReporters:
         data = json.loads(output)
         assert data["flaky_tests"][0]["trend_direction"] == "stable"
         assert len(data["flaky_tests"][0]["trend"]) == 2
+
+    def test_markdown_report_includes_wasted_time(self):
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=10,
+                pass_count=5,
+                fail_count=5,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                wasted_time_sec=120.5,
+            ),
+            FlakyTest(
+                test_name="C.testAnother",
+                total_runs=8,
+                pass_count=4,
+                fail_count=4,
+                flakiness_rate=1.0,
+                recommended_action="investigate",
+                wasted_time_sec=45.0,
+            ),
+        ]
+        output = markdown.report_flaky(tests)
+        assert "Wasted" in output
+        assert "2.0m" in output  # 120.5s formatted
+        assert "45.0s" in output
+        assert "2.8m" in output  # total: 165.5s
+
+    def test_markdown_report_no_wasted_time_when_zero(self):
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=10,
+                pass_count=5,
+                fail_count=5,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                wasted_time_sec=0.0,
+            ),
+        ]
+        output = markdown.report_flaky(tests)
+        # Should not have wasted time column when all are zero
+        assert "Wasted" not in output

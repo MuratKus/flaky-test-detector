@@ -84,3 +84,4 @@ class FlakyTest:
     recommended_action: str = ""  # "quarantine", "investigate", "stable"
     trend: list[TrendPoint] = field(default_factory=list)
     trend_direction: str = ""  # "improving", "worsening", "stable", ""
+    wasted_time_sec: float = 0.0  # total CI time wasted by failed runs

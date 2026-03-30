@@ -69,6 +69,9 @@ def analyze(
         # Determine recommended action
         action = _recommend_action(flakiness, total, fingerprints, thresholds)
 
+        # CI cost: sum duration of failed runs
+        wasted = store.get_wasted_duration(name)
+
         # Build trend data
         trend_rows = store.get_test_trend(name, limit=100)
         trend = [
@@ -93,6 +96,7 @@ def analyze(
                 recommended_action=action,
                 trend=trend,
                 trend_direction=trend_dir,
+                wasted_time_sec=round(wasted, 1),
             )
         )
 

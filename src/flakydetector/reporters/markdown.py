@@ -3,10 +3,23 @@
 from flakydetector.models import FlakyTest, RunSummary
 
 
+def _format_duration(seconds: float) -> str:
+    """Format seconds into a human-readable string."""
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    elif seconds < 3600:
+        return f"{seconds / 60:.1f}m"
+    else:
+        return f"{seconds / 3600:.1f}h"
+
+
 def report_flaky(flaky_tests: list[FlakyTest]) -> str:
     """Generate a markdown report of flaky tests."""
     if not flaky_tests:
         return "## Flaky Test Report\n\nNo flaky tests detected.\n"
+
+    total_wasted = sum(t.wasted_time_sec for t in flaky_tests)
+    show_wasted = total_wasted > 0
 
     lines = [
         "## Flaky Test Report",
@@ -26,14 +39,25 @@ def report_flaky(flaky_tests: list[FlakyTest]) -> str:
         lines.append(f"- :mag: **Investigate:** {len(investigate)}")
     if monitor:
         lines.append(f"- :eyes: **Monitor:** {len(monitor)}")
+    if show_wasted:
+        lines.append(f"- :stopwatch: **Total CI time wasted:** {_format_duration(total_wasted)}")
 
-    lines.extend(
-        [
-            "",
-            "| Test | Flakiness | Runs | Pass/Fail | Trend | Action |",
-            "|------|-----------|------|-----------|-------|--------|",
-        ]
-    )
+    if show_wasted:
+        lines.extend(
+            [
+                "",
+                "| Test | Flakiness | Runs | Pass/Fail | Trend | Wasted | Action |",
+                "|------|-----------|------|-----------|-------|--------|--------|",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "",
+                "| Test | Flakiness | Runs | Pass/Fail | Trend | Action |",
+                "|------|-----------|------|-----------|-------|--------|",
+            ]
+        )
 
     trend_icons = {
         "improving": ":chart_with_upwards_trend:",
@@ -50,9 +74,15 @@ def report_flaky(flaky_tests: list[FlakyTest]) -> str:
         trend = trend_icons.get(t.trend_direction, "—")
         # Truncate long test names
         name = t.test_name if len(t.test_name) <= 60 else f"...{t.test_name[-57:]}"
-        lines.append(
-            f"| `{name}` | {pct} | {t.total_runs} | {pf} | {trend} | {icon} {t.recommended_action} |"
-        )
+        if show_wasted:
+            wasted = _format_duration(t.wasted_time_sec) if t.wasted_time_sec > 0 else "—"
+            lines.append(
+                f"| `{name}` | {pct} | {t.total_runs} | {pf} | {trend} | {wasted} | {icon} {t.recommended_action} |"
+            )
+        else:
+            lines.append(
+                f"| `{name}` | {pct} | {t.total_runs} | {pf} | {trend} | {icon} {t.recommended_action} |"
+            )
 
     lines.append("")
     return "\n".join(lines)

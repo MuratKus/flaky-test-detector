@@ -331,3 +331,64 @@ class TestHtmlReportTrend:
         ]
         output = html_report.report_flaky(tests)
         assert "trend-spark" not in output
+
+
+class TestHtmlReportWastedTime:
+    """CI cost estimation — wasted time in flaky report."""
+
+    def test_wasted_time_column_shown(self):
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=10,
+                pass_count=5,
+                fail_count=5,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                wasted_time_sec=120.5,
+            ),
+        ]
+        output = html_report.report_flaky(tests)
+        assert "CI Cost" in output or "Wasted" in output
+        assert "2.0m" in output
+
+    def test_wasted_time_total_summary(self):
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=10,
+                pass_count=5,
+                fail_count=5,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                wasted_time_sec=120.0,
+            ),
+            FlakyTest(
+                test_name="C.testAnother",
+                total_runs=8,
+                pass_count=4,
+                fail_count=4,
+                flakiness_rate=1.0,
+                recommended_action="investigate",
+                wasted_time_sec=60.0,
+            ),
+        ]
+        output = html_report.report_flaky(tests)
+        # Should show total wasted time somewhere (120+60=180s = 3.0m)
+        assert "3.0m" in output
+
+    def test_no_wasted_time_column_when_zero(self):
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=10,
+                pass_count=5,
+                fail_count=5,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                wasted_time_sec=0.0,
+            ),
+        ]
+        output = html_report.report_flaky(tests)
+        assert "CI Cost" not in output
+        assert "Wasted" not in output

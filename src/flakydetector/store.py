@@ -144,6 +144,16 @@ class Store:
         ).fetchall()
         return [dict(row) for row in rows]
 
+    def get_wasted_duration(self, test_name: str) -> float:
+        """Sum duration_sec for failed/errored runs of a test (wasted CI time)."""
+        row = self.conn.execute(
+            """SELECT COALESCE(SUM(duration_sec), 0.0) as total
+               FROM results
+               WHERE test_name = ? AND outcome IN ('failed', 'error')""",
+            (test_name,),
+        ).fetchone()
+        return row["total"]
+
     def get_run_count(self) -> int:
         row = self.conn.execute("SELECT COUNT(*) as n FROM runs").fetchone()
         return row["n"]

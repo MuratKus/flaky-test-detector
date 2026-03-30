@@ -260,6 +260,72 @@ class TestCiUrlFlag:
         assert "<!DOCTYPE html>" in result.stdout
 
 
+class TestQuarantineCommand:
+    """Test `flaky-detect quarantine` command."""
+
+    def _ingest_flaky_data(self, db):
+        """Ingest multiple runs to create flaky test data."""
+        for i in range(4):
+            run_cli(
+                "--db",
+                db,
+                "ingest",
+                str(FIXTURES / "sample_junit.xml"),
+                "--run-id",
+                f"r{i * 2}",
+            )
+            run_cli(
+                "--db",
+                db,
+                "ingest",
+                str(FIXTURES / "sample_junit_run2.xml"),
+                "--run-id",
+                f"r{i * 2 + 1}",
+            )
+
+    def test_quarantine_json(self, tmp_path):
+        db = str(tmp_path / "test.db")
+        self._ingest_flaky_data(db)
+        result = run_cli("--db", db, "quarantine", "--format", "json", "--min-runs", "2")
+        assert result.returncode == 0
+        data = json.loads(result.stdout)
+        assert "quarantined_tests" in data
+
+    def test_quarantine_pytest(self, tmp_path):
+        db = str(tmp_path / "test.db")
+        self._ingest_flaky_data(db)
+        result = run_cli("--db", db, "quarantine", "--format", "pytest", "--min-runs", "2")
+        assert result.returncode == 0
+        assert "import pytest" in result.stdout
+        assert "QUARANTINED_TESTS" in result.stdout
+
+    def test_quarantine_junit(self, tmp_path):
+        db = str(tmp_path / "test.db")
+        self._ingest_flaky_data(db)
+        result = run_cli("--db", db, "quarantine", "--format", "junit", "--min-runs", "2")
+        assert result.returncode == 0
+        assert '<?xml version="1.0"' in result.stdout
+
+    def test_quarantine_output_to_file(self, tmp_path):
+        db = str(tmp_path / "test.db")
+        self._ingest_flaky_data(db)
+        out_file = tmp_path / "quarantine.json"
+        result = run_cli(
+            "--db",
+            db,
+            "quarantine",
+            "--format",
+            "json",
+            "--min-runs",
+            "2",
+            "-o",
+            str(out_file),
+        )
+        assert result.returncode == 0
+        assert "Quarantine list written to" in result.stdout
+        assert out_file.exists()
+
+
 class TestErrorCases:
     """Test CLI handles errors gracefully."""
 

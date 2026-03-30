@@ -341,6 +341,16 @@ def _trend_cell(trend: list[TrendPoint], direction: str) -> str:
     return f'<div style="display:flex;align-items:center;gap:0.5rem">{"".join(parts)}</div>'
 
 
+def _format_duration(seconds: float) -> str:
+    """Format seconds into a human-readable string."""
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    elif seconds < 3600:
+        return f"{seconds / 60:.1f}m"
+    else:
+        return f"{seconds / 3600:.1f}h"
+
+
 def _flakiness_bar_chart(tests: list[FlakyTest]) -> str:
     rows = []
     for t in tests:
@@ -419,6 +429,8 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
     quarantine_count = sum(1 for t in flaky_tests if t.recommended_action == "quarantine")
     investigate_count = sum(1 for t in flaky_tests if t.recommended_action == "investigate")
     monitor_count = sum(1 for t in flaky_tests if t.recommended_action == "monitor")
+    total_wasted = sum(t.wasted_time_sec for t in flaky_tests)
+    show_wasted = total_wasted > 0
 
     parts = ["<main>"]
 
@@ -439,7 +451,7 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
     parts.append("</div>")
 
     # Summary cards
-    parts.append('<div style="display:flex;gap:1rem">')
+    parts.append('<div style="display:flex;gap:1rem;flex-wrap:wrap">')
     summary = [
         ("Critical", str(quarantine_count), c["error"]),
         ("Investigating", str(investigate_count), c["tertiary"]),
@@ -450,6 +462,13 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
             f'<div class="card" style="border-left-color:{color};min-width:140px">'
             f'<div class="card-label" style="color:{c["on_surface_variant"]}">{label}</div>'
             f'<div class="card-value" style="color:{color}">{value}</div>'
+            f"</div>"
+        )
+    if show_wasted:
+        parts.append(
+            f'<div class="card" style="border-left-color:{c["tertiary"]};min-width:140px">'
+            f'<div class="card-label" style="color:{c["on_surface_variant"]}">CI Wasted</div>'
+            f'<div class="card-value" style="color:{c["tertiary"]}">{_format_duration(total_wasted)}</div>'
             f"</div>"
         )
     parts.append("</div>")
@@ -489,10 +508,11 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
     parts.append("</div>")
     parts.append('<div style="overflow-x:auto">')
     parts.append("<table>")
+    wasted_th = "<th>CI Cost</th>" if show_wasted else ""
     parts.append(
         "<thead><tr>"
         "<th>Test Name</th><th>Flakiness %</th><th>Runs</th>"
-        "<th>Pass / Fail</th><th>Trend</th><th>Recommended Action</th>"
+        f"<th>Pass / Fail</th><th>Trend</th>{wasted_th}<th>Recommended Action</th>"
         "</tr></thead>"
     )
     parts.append("<tbody>")
@@ -506,6 +526,10 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
         }.get(t.recommended_action, "")
 
         trend_html = _trend_cell(t.trend, t.trend_direction)
+        wasted_td = ""
+        if show_wasted:
+            wasted_str = _format_duration(t.wasted_time_sec) if t.wasted_time_sec > 0 else "—"
+            wasted_td = f'<td class="runs-count">{wasted_str}</td>'
 
         parts.append(
             f"<tr>"
@@ -515,6 +539,7 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
             f'<td class="runs-count">{t.total_runs}</td>'
             f"<td>{_passfail_bar(t.pass_count, t.fail_count, t.recommended_action)}</td>"
             f"<td>{trend_html}</td>"
+            f"{wasted_td}"
             f'<td><span class="badge {badge_cls}">{_escape(t.recommended_action)}</span></td>'
             f"</tr>"
         )

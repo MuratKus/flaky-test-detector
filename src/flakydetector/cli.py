@@ -23,6 +23,16 @@ from flakydetector.store import Store
 PARSERS = [JUnitXMLParser(), AllureJSONParser(), PlainLogParser()]
 
 
+def _format_duration(seconds: float) -> str:
+    """Format seconds into a human-readable string."""
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    elif seconds < 3600:
+        return f"{seconds / 60:.1f}m"
+    else:
+        return f"{seconds / 3600:.1f}h"
+
+
 def _auto_detect_parser(path: Path):
     """Try each parser and return the first one that can handle the file."""
     for parser in PARSERS:
@@ -158,6 +168,7 @@ def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investiga
         if not flaky_tests:
             click.echo("No flaky tests detected.")
         else:
+            total_wasted = sum(t.wasted_time_sec for t in flaky_tests)
             click.echo(f"\n{len(flaky_tests)} flaky test(s) detected:\n")
             for t in flaky_tests:
                 icon = {"quarantine": "🚨", "investigate": "🔍", "monitor": "👀"}.get(
@@ -169,18 +180,26 @@ def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investiga
                     "stable": "➡️",
                 }
                 trend_str = trend_arrows.get(t.trend_direction, "")
+                wasted = _format_duration(t.wasted_time_sec)
                 click.echo(
                     f"  {icon} {t.test_name}\n"
                     f"     flakiness={t.flakiness_rate:.0%}  "
                     f"runs={t.total_runs}  pass/fail={t.pass_count}/{t.fail_count}  "
                     f"→ {t.recommended_action}"
                 )
+                if t.wasted_time_sec > 0:
+                    click.echo(f"     wasted CI time: {wasted}")
                 if t.trend_direction:
                     spark = "".join("✓" if pt.outcome == "passed" else "✗" for pt in t.trend[-10:])
                     click.echo(f"     trend: {trend_str} {t.trend_direction}  [{spark}]")
                 if t.failure_fingerprints:
                     click.echo(f"     fingerprints: {', '.join(t.failure_fingerprints[:3])}")
                 click.echo()
+
+            if total_wasted > 0:
+                click.echo(
+                    f"  ⏱  Total CI time wasted by flaky tests: {_format_duration(total_wasted)}"
+                )
 
     store.close()
 
@@ -296,6 +315,56 @@ def fingerprints(ctx):
         if len(tests) > 3:
             click.echo(f"    ... and {len(tests) - 3} more")
         click.echo()
+
+    store.close()
+
+
+@main.command()
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["pytest", "junit", "json"]),
+    default="json",
+    help="Output format for the quarantine list.",
+)
+@click.option(
+    "-o",
+    "--output",
+    "output_path",
+    type=click.Path(),
+    default=None,
+    help="Write output to file instead of stdout.",
+)
+@click.option("--min-runs", default=3, help="Minimum runs before flagging as flaky.")
+@click.option(
+    "--include",
+    "include_actions",
+    default="quarantine",
+    help="Comma-separated actions to include (quarantine,investigate,monitor).",
+)
+@click.pass_context
+def quarantine(ctx, fmt, output_path, min_runs, include_actions):
+    """Export quarantined tests in a format test runners can consume."""
+    from flakydetector.analyzer import analyze as run_analysis
+    from flakydetector.quarantine import export_json, export_junit, export_pytest
+
+    store = Store(ctx.obj["db_path"])
+    flaky_tests = run_analysis(store, min_runs=min_runs)
+
+    actions = [a.strip() for a in include_actions.split(",")]
+
+    if fmt == "pytest":
+        output = export_pytest(flaky_tests, actions=actions)
+    elif fmt == "junit":
+        output = export_junit(flaky_tests, actions=actions)
+    else:
+        output = export_json(flaky_tests, actions=actions)
+
+    if output_path:
+        Path(output_path).write_text(output)
+        click.echo(f"Quarantine list written to {output_path}")
+    else:
+        click.echo(output)
 
     store.close()
 
