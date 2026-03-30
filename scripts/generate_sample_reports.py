@@ -51,10 +51,14 @@ def _build_run_summary() -> RunSummary:
         ("com.acme.user.PreferencesTest", "testSavePreferences"),
     ]
     for cls, name in passing:
-        summary.add(TestResult(
-            name=name, classname=cls, outcome=TestOutcome.PASSED,
-            duration_sec=round(random.uniform(0.05, 2.5), 3),
-        ))
+        summary.add(
+            TestResult(
+                name=name,
+                classname=cls,
+                outcome=TestOutcome.PASSED,
+                duration_sec=round(random.uniform(0.05, 2.5), 3),
+            )
+        )
 
     # Skipped tests
     skipped = [
@@ -62,14 +66,19 @@ def _build_run_summary() -> RunSummary:
         ("com.acme.notification.SMSServiceTest", "testSendSMS"),
     ]
     for cls, name in skipped:
-        summary.add(TestResult(
-            name=name, classname=cls, outcome=TestOutcome.SKIPPED,
-        ))
+        summary.add(
+            TestResult(
+                name=name,
+                classname=cls,
+                outcome=TestOutcome.SKIPPED,
+            )
+        )
 
     # Failures — the interesting part
     failures = [
         (
-            "com.acme.auth.LoginServiceTest", "testLoginTimeout",
+            "com.acme.auth.LoginServiceTest",
+            "testLoginTimeout",
             "Expected response within 5000ms but timed out after 5012ms",
             (
                 "java.util.concurrent.TimeoutException: Timeout waiting for response\n"
@@ -79,7 +88,8 @@ def _build_run_summary() -> RunSummary:
             ),
         ),
         (
-            "com.acme.cart.CheckoutTest", "testCheckoutWithPromoCode",
+            "com.acme.cart.CheckoutTest",
+            "testCheckoutWithPromoCode",
             "AssertionError: expected total 89.99 but got 99.99",
             (
                 "java.lang.AssertionError: expected:<89.99> but was:<99.99>\n"
@@ -88,7 +98,8 @@ def _build_run_summary() -> RunSummary:
             ),
         ),
         (
-            "com.acme.inventory.StockServiceTest", "testConcurrentReservation",
+            "com.acme.inventory.StockServiceTest",
+            "testConcurrentReservation",
             "org.postgresql.util.PSQLException: deadlock detected",
             (
                 "org.postgresql.util.PSQLException: ERROR: deadlock detected\n"
@@ -100,26 +111,33 @@ def _build_run_summary() -> RunSummary:
         ),
     ]
     for cls, name, msg, trace in failures:
-        summary.add(TestResult(
-            name=name, classname=cls, outcome=TestOutcome.FAILED,
-            duration_sec=round(random.uniform(1.0, 8.0), 3),
-            error_message=msg, stacktrace=trace,
-        ))
+        summary.add(
+            TestResult(
+                name=name,
+                classname=cls,
+                outcome=TestOutcome.FAILED,
+                duration_sec=round(random.uniform(1.0, 8.0), 3),
+                error_message=msg,
+                stacktrace=trace,
+            )
+        )
 
     # One error
-    summary.add(TestResult(
-        name="testWebhookDelivery",
-        classname="com.acme.notification.WebhookServiceTest",
-        outcome=TestOutcome.ERROR,
-        duration_sec=15.2,
-        error_message="java.net.ConnectException: Connection refused (localhost:9999)",
-        stacktrace=(
-            "java.net.ConnectException: Connection refused (Connection refused)\n"
-            "\tat java.net.PlainSocketImpl.connect(PlainSocketImpl.java:196)\n"
-            "\tat com.acme.notification.WebhookClient.deliver(WebhookClient.java:45)\n"
-            "\tat com.acme.notification.WebhookServiceTest.testWebhookDelivery(WebhookServiceTest.java:78)\n"
-        ),
-    ))
+    summary.add(
+        TestResult(
+            name="testWebhookDelivery",
+            classname="com.acme.notification.WebhookServiceTest",
+            outcome=TestOutcome.ERROR,
+            duration_sec=15.2,
+            error_message="java.net.ConnectException: Connection refused (localhost:9999)",
+            stacktrace=(
+                "java.net.ConnectException: Connection refused (Connection refused)\n"
+                "\tat java.net.PlainSocketImpl.connect(PlainSocketImpl.java:196)\n"
+                "\tat com.acme.notification.WebhookClient.deliver(WebhookClient.java:45)\n"
+                "\tat com.acme.notification.WebhookServiceTest.testWebhookDelivery(WebhookServiceTest.java:78)\n"
+            ),
+        )
+    )
 
     # Fingerprint all results
     fingerprint_results(summary.results)

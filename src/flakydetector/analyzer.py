@@ -28,13 +28,14 @@ class Thresholds:
     """Configurable thresholds for flakiness detection and action classification."""
 
     min_flakiness: float = FLAKINESS_THRESHOLD  # below this, test is not flagged
-    quarantine: float = 0.5   # >= this → quarantine
+    quarantine: float = 0.5  # >= this → quarantine
     investigate: float = 0.3  # >= this → investigate
     # anything >= min_flakiness but below investigate → monitor
 
 
-def analyze(store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION,
-            thresholds: Thresholds | None = None) -> list[FlakyTest]:
+def analyze(
+    store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION, thresholds: Thresholds | None = None
+) -> list[FlakyTest]:
     """Analyze all tests in the store and return flaky ones."""
     if thresholds is None:
         thresholds = Thresholds()
@@ -86,8 +87,9 @@ def analyze(store: Store, min_runs: int = MIN_RUNS_FOR_DETECTION,
     return flaky_tests
 
 
-def _recommend_action(flakiness: float, total_runs: int, fingerprints: list[str],
-                      thresholds: Thresholds | None = None) -> str:
+def _recommend_action(
+    flakiness: float, total_runs: int, fingerprints: list[str], thresholds: Thresholds | None = None
+) -> str:
     """Suggest what to do about a flaky test."""
     if thresholds is None:
         thresholds = Thresholds()

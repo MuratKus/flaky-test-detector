@@ -185,8 +185,12 @@ class TestOutputFlag:
     def test_report_output_to_file(self, tmp_path):
         out_file = tmp_path / "report.html"
         result = run_cli(
-            "report", str(FIXTURES / "sample_junit.xml"),
-            "--format", "html", "-o", str(out_file),
+            "report",
+            str(FIXTURES / "sample_junit.xml"),
+            "--format",
+            "html",
+            "-o",
+            str(out_file),
         )
         assert result.returncode == 0
         assert "Report written to" in result.stdout
@@ -198,12 +202,18 @@ class TestOutputFlag:
         out_file = tmp_path / "analyze.json"
         run_cli("--db", db, "ingest", str(FIXTURES / "sample_junit.xml"), "--run-id", "r1")
         result = run_cli(
-            "--db", db, "analyze",
-            "--format", "json", "-o", str(out_file),
+            "--db",
+            db,
+            "analyze",
+            "--format",
+            "json",
+            "-o",
+            str(out_file),
         )
         assert result.returncode == 0
         assert "Report written to" in result.stdout
         import json
+
         data = json.loads(out_file.read_text())
         assert "total_flaky" in data
 
@@ -213,9 +223,12 @@ class TestCiUrlFlag:
 
     def test_report_html_with_ci_url(self):
         result = run_cli(
-            "report", str(FIXTURES / "sample_junit.xml"),
-            "--format", "html",
-            "--ci-url", "https://ci.example.com/run/42",
+            "report",
+            str(FIXTURES / "sample_junit.xml"),
+            "--format",
+            "html",
+            "--ci-url",
+            "https://ci.example.com/run/42",
         )
         assert result.returncode == 0
         assert "View in CI" in result.stdout
@@ -223,8 +236,10 @@ class TestCiUrlFlag:
 
     def test_report_text_ignores_ci_url(self):
         result = run_cli(
-            "report", str(FIXTURES / "sample_junit.xml"),
-            "--ci-url", "https://ci.example.com/run/42",
+            "report",
+            str(FIXTURES / "sample_junit.xml"),
+            "--ci-url",
+            "https://ci.example.com/run/42",
         )
         assert result.returncode == 0
         assert "View in CI" not in result.stdout
@@ -233,9 +248,13 @@ class TestCiUrlFlag:
         db = str(tmp_path / "test.db")
         run_cli("--db", db, "ingest", str(FIXTURES / "sample_junit.xml"), "--run-id", "r1")
         result = run_cli(
-            "--db", db, "analyze",
-            "--format", "html",
-            "--ci-url", "https://ci.example.com/run/99",
+            "--db",
+            db,
+            "analyze",
+            "--format",
+            "html",
+            "--ci-url",
+            "https://ci.example.com/run/99",
         )
         assert result.returncode == 0
         assert "<!DOCTYPE html>" in result.stdout

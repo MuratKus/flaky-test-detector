@@ -274,6 +274,6 @@ class TestHtmlReportCiUrl:
 
     def test_ci_url_is_escaped(self):
         tests = _make_flaky_tests()
-        output = html_report.report_flaky(tests, ci_url='https://ci.example.com/<script>')
+        output = html_report.report_flaky(tests, ci_url="https://ci.example.com/<script>")
         assert "&lt;script&gt;" in output or "%3Cscript%3E" in output
         assert "<script>" not in output.split("</style>")[-1].split("<script>")[0]

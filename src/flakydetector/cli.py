@@ -96,12 +96,33 @@ def ingest(ctx, path, run_id, fmt):
 
 
 @main.command()
-@click.option("--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text")
-@click.option("-o", "--output", "output_path", type=click.Path(), default=None, help="Write output to file instead of stdout.")
+@click.option(
+    "--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text"
+)
+@click.option(
+    "-o",
+    "--output",
+    "output_path",
+    type=click.Path(),
+    default=None,
+    help="Write output to file instead of stdout.",
+)
 @click.option("--min-runs", default=3, help="Minimum runs before flagging as flaky.")
-@click.option("--threshold", default=0.2, type=float, help="Minimum flakiness rate to flag (0.0-1.0).")
-@click.option("--quarantine-at", default=0.5, type=float, help="Flakiness rate at or above which to recommend quarantine.")
-@click.option("--investigate-at", default=0.3, type=float, help="Flakiness rate at or above which to recommend investigation.")
+@click.option(
+    "--threshold", default=0.2, type=float, help="Minimum flakiness rate to flag (0.0-1.0)."
+)
+@click.option(
+    "--quarantine-at",
+    default=0.5,
+    type=float,
+    help="Flakiness rate at or above which to recommend quarantine.",
+)
+@click.option(
+    "--investigate-at",
+    default=0.3,
+    type=float,
+    help="Flakiness rate at or above which to recommend investigation.",
+)
 @click.option("--ci-url", default=None, help="Link to CI run for 'View in CI' in HTML reports.")
 @click.pass_context
 def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investigate_at, ci_url):
@@ -158,8 +179,17 @@ def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investiga
 @main.command()
 @click.argument("path", type=click.Path(exists=True))
 @click.option("--run-id", default=None)
-@click.option("--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text")
-@click.option("-o", "--output", "output_path", type=click.Path(), default=None, help="Write output to file instead of stdout.")
+@click.option(
+    "--format", "fmt", type=click.Choice(["json", "markdown", "html", "text"]), default="text"
+)
+@click.option(
+    "-o",
+    "--output",
+    "output_path",
+    type=click.Path(),
+    default=None,
+    help="Write output to file instead of stdout.",
+)
 @click.option("--ci-url", default=None, help="Link to CI run for 'View in CI' in HTML reports.")
 def report(path, run_id, fmt, output_path, ci_url):
     """One-shot: parse and report without storing (stateless mode)."""
