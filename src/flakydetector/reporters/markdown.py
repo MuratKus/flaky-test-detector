@@ -30,10 +30,16 @@ def report_flaky(flaky_tests: list[FlakyTest]) -> str:
     lines.extend(
         [
             "",
-            "| Test | Flakiness | Runs | Pass/Fail | Action |",
-            "|------|-----------|------|-----------|--------|",
+            "| Test | Flakiness | Runs | Pass/Fail | Trend | Action |",
+            "|------|-----------|------|-----------|-------|--------|",
         ]
     )
+
+    trend_icons = {
+        "improving": ":chart_with_upwards_trend:",
+        "worsening": ":chart_with_downwards_trend:",
+        "stable": ":left_right_arrow:",
+    }
 
     for t in flaky_tests:
         pct = f"{t.flakiness_rate * 100:.0f}%"
@@ -41,10 +47,11 @@ def report_flaky(flaky_tests: list[FlakyTest]) -> str:
         icon = {"quarantine": ":rotating_light:", "investigate": ":mag:", "monitor": ":eyes:"}.get(
             t.recommended_action, ""
         )
+        trend = trend_icons.get(t.trend_direction, "—")
         # Truncate long test names
         name = t.test_name if len(t.test_name) <= 60 else f"...{t.test_name[-57:]}"
         lines.append(
-            f"| `{name}` | {pct} | {t.total_runs} | {pf} | {icon} {t.recommended_action} |"
+            f"| `{name}` | {pct} | {t.total_runs} | {pf} | {trend} | {icon} {t.recommended_action} |"
         )
 
     lines.append("")

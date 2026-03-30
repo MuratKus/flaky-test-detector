@@ -62,6 +62,15 @@ class RunSummary:
 
 
 @dataclass
+class TrendPoint:
+    """A single data point in a flakiness trend (one run's outcome for a test)."""
+
+    run_id: str
+    outcome: str  # "passed", "failed", "error"
+    ingested_at: str
+
+
+@dataclass
 class FlakyTest:
     """A test identified as flaky across multiple runs."""
 
@@ -73,3 +82,5 @@ class FlakyTest:
     failure_fingerprints: list[str] = field(default_factory=list)
     last_seen: str | None = None
     recommended_action: str = ""  # "quarantine", "investigate", "stable"
+    trend: list[TrendPoint] = field(default_factory=list)
+    trend_direction: str = ""  # "improving", "worsening", "stable", ""

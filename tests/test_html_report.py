@@ -2,7 +2,7 @@
 
 import re
 
-from flakydetector.models import FlakyTest, RunSummary, TestOutcome, TestResult
+from flakydetector.models import FlakyTest, RunSummary, TestOutcome, TestResult, TrendPoint
 from flakydetector.reporters import html_report
 
 
@@ -277,3 +277,57 @@ class TestHtmlReportCiUrl:
         output = html_report.report_flaky(tests, ci_url="https://ci.example.com/<script>")
         assert "&lt;script&gt;" in output or "%3Cscript%3E" in output
         assert "<script>" not in output.split("</style>")[-1].split("<script>")[0]
+
+
+class TestHtmlReportTrend:
+    """Trend sparkline and direction in flaky report."""
+
+    def test_trend_sparkline_rendered(self):
+        trend = [
+            TrendPoint(run_id=f"r{i}", outcome="passed" if i % 2 == 0 else "failed", ingested_at="")
+            for i in range(6)
+        ]
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=6,
+                pass_count=3,
+                fail_count=3,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                trend=trend,
+                trend_direction="stable",
+            )
+        ]
+        output = html_report.report_flaky(tests)
+        assert "trend-spark" in output
+
+    def test_trend_direction_shown(self):
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=6,
+                pass_count=3,
+                fail_count=3,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                trend_direction="worsening",
+            )
+        ]
+        output = html_report.report_flaky(tests)
+        # Should contain a worsening indicator
+        assert "worsening" in output.lower() or "&#x2198;" in output or "↘" in output
+
+    def test_no_trend_when_empty(self):
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=6,
+                pass_count=3,
+                fail_count=3,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+            )
+        ]
+        output = html_report.report_flaky(tests)
+        assert "trend-spark" not in output

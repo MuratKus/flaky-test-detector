@@ -163,12 +163,21 @@ def analyze(ctx, fmt, output_path, min_runs, threshold, quarantine_at, investiga
                 icon = {"quarantine": "🚨", "investigate": "🔍", "monitor": "👀"}.get(
                     t.recommended_action, ""
                 )
+                trend_arrows = {
+                    "improving": "📈",
+                    "worsening": "📉",
+                    "stable": "➡️",
+                }
+                trend_str = trend_arrows.get(t.trend_direction, "")
                 click.echo(
                     f"  {icon} {t.test_name}\n"
                     f"     flakiness={t.flakiness_rate:.0%}  "
                     f"runs={t.total_runs}  pass/fail={t.pass_count}/{t.fail_count}  "
                     f"→ {t.recommended_action}"
                 )
+                if t.trend_direction:
+                    spark = "".join("✓" if pt.outcome == "passed" else "✗" for pt in t.trend[-10:])
+                    click.echo(f"     trend: {trend_str} {t.trend_direction}  [{spark}]")
                 if t.failure_fingerprints:
                     click.echo(f"     fingerprints: {', '.join(t.failure_fingerprints[:3])}")
                 click.echo()

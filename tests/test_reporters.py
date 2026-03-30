@@ -2,7 +2,7 @@
 
 import json
 
-from flakydetector.models import FlakyTest
+from flakydetector.models import FlakyTest, TrendPoint
 from flakydetector.reporters import json_report, markdown
 
 
@@ -42,3 +42,41 @@ class TestReporters:
     def test_markdown_report_empty(self):
         output = markdown.report_flaky([])
         assert "No flaky tests detected" in output
+
+    def test_markdown_report_includes_trend(self):
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=6,
+                pass_count=3,
+                fail_count=3,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                trend_direction="worsening",
+            )
+        ]
+        output = markdown.report_flaky(tests)
+        assert "Trend" in output
+        assert "chart_with_downwards_trend" in output
+
+    def test_json_report_includes_trend(self):
+        trend = [
+            TrendPoint(run_id="r1", outcome="passed", ingested_at="2025-01-01"),
+            TrendPoint(run_id="r2", outcome="failed", ingested_at="2025-01-02"),
+        ]
+        tests = [
+            FlakyTest(
+                test_name="C.testFlaky",
+                total_runs=2,
+                pass_count=1,
+                fail_count=1,
+                flakiness_rate=1.0,
+                recommended_action="quarantine",
+                trend=trend,
+                trend_direction="stable",
+            )
+        ]
+        output = json_report.report_flaky(tests)
+        data = json.loads(output)
+        assert data["flaky_tests"][0]["trend_direction"] == "stable"
+        assert len(data["flaky_tests"][0]["trend"]) == 2

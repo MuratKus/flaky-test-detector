@@ -1,6 +1,6 @@
 """Tests for flakiness analyzer."""
 
-from flakydetector.analyzer import analyze
+from flakydetector.analyzer import analyze, compute_trend_direction
 from flakydetector.models import RunSummary, TestOutcome, TestResult
 from flakydetector.store import Store
 
@@ -94,3 +94,51 @@ class TestAnalyzer:
         flaky = analyze(store, min_runs=3)
         assert len(flaky) == 0
         store.close()
+
+    def test_flaky_test_has_trend_data(self, tmp_path):
+        """Analyzed flaky tests should include trend data."""
+        store = Store(tmp_path / "test.db")
+        for i in range(6):
+            s = RunSummary(run_id=f"run-{i}", source="test")
+            outcome = TestOutcome.PASSED if i % 2 == 0 else TestOutcome.FAILED
+            s.add(
+                TestResult(
+                    name="testFlaky",
+                    classname="C",
+                    outcome=outcome,
+                    fingerprint="fp1" if outcome == TestOutcome.FAILED else None,
+                )
+            )
+            store.ingest(s)
+
+        flaky = analyze(store, min_runs=3)
+        ft = flaky[0]
+        assert len(ft.trend) == 6
+        assert ft.trend[0].run_id == "run-0"
+        assert ft.trend[0].outcome == "passed"
+        assert ft.trend_direction != ""
+        store.close()
+
+
+class TestTrendDirection:
+    """Test compute_trend_direction in isolation."""
+
+    def test_improving_trend(self):
+        # Older half: mostly failing. Recent half: mostly passing.
+        outcomes = ["failed", "failed", "failed", "passed", "passed", "passed"]
+        assert compute_trend_direction(outcomes) == "improving"
+
+    def test_worsening_trend(self):
+        # Older half: mostly passing. Recent half: mostly failing.
+        outcomes = ["passed", "passed", "passed", "failed", "failed", "failed"]
+        assert compute_trend_direction(outcomes) == "worsening"
+
+    def test_stable_trend(self):
+        # Both halves have same pass rate (50/50 each).
+        outcomes = ["passed", "failed", "passed", "failed"]
+        assert compute_trend_direction(outcomes) == "stable"
+
+    def test_too_few_runs(self):
+        # Not enough data to determine trend.
+        assert compute_trend_direction(["passed"]) == ""
+        assert compute_trend_direction([]) == ""

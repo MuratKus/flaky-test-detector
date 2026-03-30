@@ -45,7 +45,7 @@ Commits: `359b7f1`, `1798e1e`, `7765d51`
 
 ### 7b: Improvements
 - [x] Configurable thresholds (`--threshold`, `--quarantine-at`, `--investigate-at` CLI flags)
-- [ ] Trend tracking (flakiness over time, not just current snapshot)
+- [x] Trend tracking (flakiness over time, not just current snapshot)
 - [ ] CI artifact auto-upload in the GitHub Action
 - [ ] PyPI-ready packaging (`uv build` + publish workflow)
 - [ ] Contributing guide

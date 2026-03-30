@@ -131,6 +131,19 @@ class Store:
         ).fetchall()
         return [dict(row) for row in rows]
 
+    def get_test_trend(self, test_name: str, limit: int = 50) -> list[dict]:
+        """Get per-run outcomes for a test, ordered oldest → newest."""
+        rows = self.conn.execute(
+            """SELECT r.run_id, r.outcome, runs.ingested_at
+               FROM results r
+               JOIN runs ON r.run_id = runs.run_id
+               WHERE r.test_name = ?
+               ORDER BY runs.ingested_at ASC
+               LIMIT ?""",
+            (test_name, limit),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
     def get_run_count(self) -> int:
         row = self.conn.execute("SELECT COUNT(*) as n FROM runs").fetchone()
         return row["n"]

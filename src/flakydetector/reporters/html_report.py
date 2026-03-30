@@ -4,7 +4,7 @@ import html
 from datetime import UTC, datetime
 
 from flakydetector import __version__
-from flakydetector.models import FlakyTest, RunSummary, TestOutcome
+from flakydetector.models import FlakyTest, RunSummary, TestOutcome, TrendPoint
 
 # -- Design tokens (from Tailwind config) --
 _C = {
@@ -307,6 +307,40 @@ def _bar_color_for_action(action: str) -> str:
     }.get(action, _C["error"])
 
 
+_TREND_ARROWS = {
+    "improving": ("&#x2197;", _C["secondary"]),  # ↗ green
+    "worsening": ("&#x2198;", _C["error"]),  # ↘ red
+    "stable": ("&#x2194;", _C["outline"]),  # ↔ gray
+}
+
+
+def _trend_sparkline(trend: list[TrendPoint]) -> str:
+    """Render a tiny inline pass/fail dot sparkline."""
+    if not trend:
+        return ""
+    c = _C
+    dots = []
+    for pt in trend:
+        color = c["secondary"] if pt.outcome == "passed" else c["error"]
+        dots.append(f'<span style="color:{color};font-size:0.5rem">&#x25CF;</span>')
+    return f'<span class="trend-spark" style="display:inline-flex;gap:2px;align-items:center">{"".join(dots)}</span>'
+
+
+def _trend_cell(trend: list[TrendPoint], direction: str) -> str:
+    """Render the full trend table cell content: sparkline + direction arrow."""
+    if not trend and not direction:
+        return ""
+    parts = []
+    if trend:
+        parts.append(_trend_sparkline(trend))
+    if direction and direction in _TREND_ARROWS:
+        arrow, color = _TREND_ARROWS[direction]
+        parts.append(
+            f'<span style="color:{color};font-size:0.75rem;font-weight:700">{arrow}</span>'
+        )
+    return f'<div style="display:flex;align-items:center;gap:0.5rem">{"".join(parts)}</div>'
+
+
 def _flakiness_bar_chart(tests: list[FlakyTest]) -> str:
     rows = []
     for t in tests:
@@ -458,7 +492,7 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
     parts.append(
         "<thead><tr>"
         "<th>Test Name</th><th>Flakiness %</th><th>Runs</th>"
-        "<th>Pass / Fail</th><th>Recommended Action</th>"
+        "<th>Pass / Fail</th><th>Trend</th><th>Recommended Action</th>"
         "</tr></thead>"
     )
     parts.append("<tbody>")
@@ -471,6 +505,8 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
             "monitor": "badge-monitor",
         }.get(t.recommended_action, "")
 
+        trend_html = _trend_cell(t.trend, t.trend_direction)
+
         parts.append(
             f"<tr>"
             f'<td><div class="td-name">{_action_icon(t.recommended_action)}'
@@ -478,6 +514,7 @@ def report_flaky(flaky_tests: list[FlakyTest], *, ci_url: str | None = None) -> 
             f'<td class="flakiness-pct" style="color:{pct_color}">{pct:.0f}%</td>'
             f'<td class="runs-count">{t.total_runs}</td>'
             f"<td>{_passfail_bar(t.pass_count, t.fail_count, t.recommended_action)}</td>"
+            f"<td>{trend_html}</td>"
             f'<td><span class="badge {badge_cls}">{_escape(t.recommended_action)}</span></td>'
             f"</tr>"
         )

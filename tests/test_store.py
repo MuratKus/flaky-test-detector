@@ -40,3 +40,33 @@ class TestStore:
             store.ingest(s)
         assert store.get_run_count() == 3
         store.close()
+
+    def test_get_test_trend(self, tmp_path):
+        store = self._make_store(tmp_path)
+        outcomes = ["passed", "failed", "passed", "failed", "passed"]
+        for i, outcome in enumerate(outcomes):
+            s = RunSummary(run_id=f"r{i}", source="test")
+            s.add(
+                TestResult(
+                    name="testFlaky",
+                    classname="C",
+                    outcome=TestOutcome(outcome),
+                )
+            )
+            store.ingest(s)
+
+        trend = store.get_test_trend("C.testFlaky")
+        assert len(trend) == 5
+        # Should be ordered oldest → newest
+        assert trend[0]["run_id"] == "r0"
+        assert trend[-1]["run_id"] == "r4"
+        # Should have outcome field
+        assert trend[0]["outcome"] == "passed"
+        assert trend[1]["outcome"] == "failed"
+        store.close()
+
+    def test_get_test_trend_empty(self, tmp_path):
+        store = self._make_store(tmp_path)
+        trend = store.get_test_trend("nonexistent")
+        assert trend == []
+        store.close()

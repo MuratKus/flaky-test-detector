@@ -13,7 +13,7 @@ Flakiness rate: 1.0 - abs(pass_rate - 0.5) * 2
 
 from dataclasses import dataclass
 
-from flakydetector.models import FlakyTest
+from flakydetector.models import FlakyTest, TrendPoint
 from flakydetector.store import Store
 
 # Minimum runs needed before we can call a test flaky
@@ -69,6 +69,18 @@ def analyze(
         # Determine recommended action
         action = _recommend_action(flakiness, total, fingerprints, thresholds)
 
+        # Build trend data
+        trend_rows = store.get_test_trend(name, limit=100)
+        trend = [
+            TrendPoint(
+                run_id=r["run_id"],
+                outcome=r["outcome"],
+                ingested_at=r.get("ingested_at", ""),
+            )
+            for r in trend_rows
+        ]
+        trend_dir = compute_trend_direction([r["outcome"] for r in trend_rows])
+
         flaky_tests.append(
             FlakyTest(
                 test_name=name,
@@ -79,12 +91,37 @@ def analyze(
                 failure_fingerprints=fingerprints,
                 last_seen=history[0].get("ingested_at", ""),
                 recommended_action=action,
+                trend=trend,
+                trend_direction=trend_dir,
             )
         )
 
     # Sort by flakiness rate descending (worst offenders first)
     flaky_tests.sort(key=lambda t: t.flakiness_rate, reverse=True)
     return flaky_tests
+
+
+def compute_trend_direction(outcomes: list[str]) -> str:
+    """Compare pass rate of older half vs recent half to determine trend.
+
+    Returns "improving", "worsening", "stable", or "" (not enough data).
+    """
+    if len(outcomes) < 2:
+        return ""
+
+    mid = len(outcomes) // 2
+    older = outcomes[:mid]
+    recent = outcomes[mid:]
+
+    older_pass_rate = sum(1 for o in older if o == "passed") / len(older)
+    recent_pass_rate = sum(1 for o in recent if o == "passed") / len(recent)
+
+    diff = recent_pass_rate - older_pass_rate
+    if diff > 0.1:
+        return "improving"
+    elif diff < -0.1:
+        return "worsening"
+    return "stable"
 
 
 def _recommend_action(
