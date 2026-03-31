@@ -60,11 +60,12 @@ flaky-detect fingerprints
 
 The HTML report is a self-contained dark-themed page with SVG charts, pass/fail bars, and failure groups. It includes inline search filtering and JSON export.
 
-> [View sample flaky analysis report](docs/sample-report-flaky.html) ·
-> [View sample run summary report](docs/sample-report-run.html)
+> [View sample flaky analysis report](https://htmlpreview.github.io/?https://github.com/MuratKus/flaky-test-detector/blob/main/docs/sample-report-flaky.html) ·
+> [View sample run summary report](https://htmlpreview.github.io/?https://github.com/MuratKus/flaky-test-detector/blob/main/docs/sample-report-run.html)
 
-<!-- To add a screenshot: save a browser screenshot as docs/report-preview.png and uncomment: -->
-<!-- ![HTML Report Preview](docs/report-preview.png) -->
+<!-- To add screenshots: open the sample reports in a browser, take screenshots, save to docs/, and uncomment: -->
+<!-- ![Flaky Analysis Report](docs/screenshot-flaky.png) -->
+<!-- ![Run Summary Report](docs/screenshot-run.png) -->
 
 ## Example Output
 
@@ -180,6 +181,8 @@ Tests are classified by recommended action:
 
 ## Use in GitHub Actions
 
+### Basic: report flaky tests in step summary
+
 ```yaml
 - name: Run tests
   run: ./gradlew test --continue || true
@@ -190,6 +193,57 @@ Tests are classified by recommended action:
 - name: Check for flaky tests
   run: |
     flaky-detect analyze --format markdown >> $GITHUB_STEP_SUMMARY
+```
+
+### CI gate: fail the build if flaky tests are found
+
+```yaml
+- name: Detect flaky tests
+  id: flaky
+  run: |
+    flaky-detect analyze --format json > /tmp/flaky.json
+    COUNT=$(python -c "import json; print(json.load(open('/tmp/flaky.json'))['total_flaky'])")
+    echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+- name: Fail if flaky tests exceed threshold
+  if: steps.flaky.outputs.count > 0
+  run: |
+    echo "::error::${{ steps.flaky.outputs.count }} flaky test(s) detected"
+    exit 1
+```
+
+### Auto-quarantine: skip flaky tests in CI
+
+```yaml
+- name: Generate quarantine list
+  run: flaky-detect quarantine --format pytest -o conftest_quarantine.py
+
+- name: Run tests (flaky tests auto-skipped)
+  run: pytest --confcutdir=. -c conftest_quarantine.py
+```
+
+### HTML report as build artifact
+
+```yaml
+- name: Generate HTML report
+  run: flaky-detect analyze --format html -o flaky-report.html --ci-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+- name: Upload report
+  uses: actions/upload-artifact@v4
+  with:
+    name: flaky-test-report
+    path: flaky-report.html
+```
+
+### Using the composite action
+
+```yaml
+- uses: MuratKus/flaky-test-detector@main
+  with:
+    path: build/test-results/
+    mode: analyze
+    comment-on-pr: true
+    upload-html-artifact: true
 ```
 
 ## Architecture
