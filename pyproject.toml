@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
+    "anthropic>=0.96.0",
     "click>=8.0",
 ]
 

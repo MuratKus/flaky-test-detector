@@ -85,3 +85,16 @@ class FlakyTest:
     trend: list[TrendPoint] = field(default_factory=list)
     trend_direction: str = ""  # "improving", "worsening", "stable", ""
     wasted_time_sec: float = 0.0  # total CI time wasted by failed runs
+
+
+@dataclass
+class InvestigationResult:
+    """Result of an AI investigation into a flaky test."""
+
+    test_name: str
+    category: str
+    confidence: str
+    evidence: list[dict]
+    not_supported: list[str]
+    suggested_fix: str
+    cached: bool = False
