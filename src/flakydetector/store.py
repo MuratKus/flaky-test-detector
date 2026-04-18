@@ -5,6 +5,7 @@ Each ingest creates a new run record, and individual test results
 are stored with their fingerprints for trend analysis.
 """
 
+import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
@@ -53,6 +54,14 @@ class Store:
                 ON results(fingerprint);
             CREATE INDEX IF NOT EXISTS idx_results_run_id
                 ON results(run_id);
+
+            CREATE TABLE IF NOT EXISTS investigations (
+                fingerprint TEXT NOT NULL,
+                commit_sha  TEXT NOT NULL,
+                result_json TEXT NOT NULL,
+                created_at  TEXT NOT NULL,
+                PRIMARY KEY (fingerprint, commit_sha)
+            );
         """)
 
     def ingest(self, summary: RunSummary) -> int:
@@ -157,6 +166,64 @@ class Store:
     def get_run_count(self) -> int:
         row = self.conn.execute("SELECT COUNT(*) as n FROM runs").fetchone()
         return row["n"]
+
+    def get_fingerprint_group(self, fingerprint: str) -> list[dict]:
+        rows = self.conn.execute(
+            """SELECT DISTINCT test_name, run_id, outcome, error_message
+               FROM results
+               WHERE fingerprint = ?
+               ORDER BY run_id DESC
+               LIMIT 50""",
+            (fingerprint,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def get_run_metadata(self, run_id: str) -> dict | None:
+        row = self.conn.execute(
+            "SELECT * FROM runs WHERE run_id = ?", (run_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def get_failure_timing(self, test_name: str) -> dict:
+        rows = self.conn.execute(
+            """SELECT outcome,
+                      AVG(duration_sec) as avg_dur,
+                      MIN(duration_sec) as min_dur,
+                      MAX(duration_sec) as max_dur,
+                      COUNT(*) as count
+               FROM results
+               WHERE test_name = ? AND outcome IN ('passed', 'failed', 'error')
+               GROUP BY outcome""",
+            (test_name,),
+        ).fetchall()
+        return {row["outcome"]: dict(row) for row in rows}
+
+    def get_cached_investigation(
+        self, fingerprint: str, commit_sha: str, ttl_hours: int = 24
+    ) -> dict | None:
+        row = self.conn.execute(
+            """SELECT result_json, created_at FROM investigations
+               WHERE fingerprint = ? AND commit_sha = ?""",
+            (fingerprint, commit_sha),
+        ).fetchone()
+        if not row:
+            return None
+        created_at = datetime.fromisoformat(row["created_at"])
+        age_seconds = (datetime.now(UTC) - created_at).total_seconds()
+        if age_seconds > ttl_hours * 3600:
+            return None
+        return json.loads(row["result_json"])
+
+    def set_cached_investigation(
+        self, fingerprint: str, commit_sha: str, result: dict
+    ) -> None:
+        self.conn.execute(
+            """INSERT OR REPLACE INTO investigations
+               (fingerprint, commit_sha, result_json, created_at)
+               VALUES (?, ?, ?, ?)""",
+            (fingerprint, commit_sha, json.dumps(result), datetime.now(UTC).isoformat()),
+        )
+        self.conn.commit()
 
     def close(self) -> None:
         self.conn.close()
