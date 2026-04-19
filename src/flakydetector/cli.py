@@ -386,6 +386,7 @@ def quarantine(ctx, fmt, output_path, min_runs, include_actions):
 def investigate(ctx, test_name, fingerprint, repo_path, fmt, max_commits, model, no_cache):
     """Investigate why a flaky test fails using AI analysis."""
     import json as _json
+
     from flakydetector.investigator import investigate as run_investigation
 
     store = Store(ctx.obj["db_path"])
@@ -402,7 +403,7 @@ def investigate(ctx, test_name, fingerprint, repo_path, fmt, max_commits, model,
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         store.close()
-        raise SystemExit(1)
+        raise SystemExit(1) from None
 
     if fmt == "json":
         click.echo(_json.dumps(result.__dict__, indent=2))

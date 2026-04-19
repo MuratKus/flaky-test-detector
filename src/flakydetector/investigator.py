@@ -8,6 +8,10 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import anthropic
+
+from flakydetector.models import InvestigationResult
+
 if TYPE_CHECKING:
     from flakydetector.store import Store
 
@@ -16,7 +20,7 @@ if TYPE_CHECKING:
 # SQLite-backed tool functions
 # ---------------------------------------------------------------------------
 
-def tool_test_history(store: "Store", test_name: str) -> dict:
+def tool_test_history(store: Store, test_name: str) -> dict:
     rows = store.get_test_history(test_name)
     return {
         "test_name": test_name,
@@ -33,17 +37,17 @@ def tool_test_history(store: "Store", test_name: str) -> dict:
     }
 
 
-def tool_fingerprint_group(store: "Store", fingerprint: str) -> dict:
+def tool_fingerprint_group(store: Store, fingerprint: str) -> dict:
     tests = store.get_fingerprint_group(fingerprint)
     return {"fingerprint": fingerprint, "tests": tests, "count": len(tests)}
 
 
-def tool_run_metadata(store: "Store", run_id: str) -> dict:
+def tool_run_metadata(store: Store, run_id: str) -> dict:
     meta = store.get_run_metadata(run_id)
     return meta if meta else {}
 
 
-def tool_failure_timing(store: "Store", test_name: str) -> dict:
+def tool_failure_timing(store: Store, test_name: str) -> dict:
     return store.get_failure_timing(test_name)
 
 
@@ -152,9 +156,6 @@ def tool_code_under_test(test_name: str, repo_path: Path = Path(".")) -> dict:
 # investigate() entry point
 # ---------------------------------------------------------------------------
 
-import anthropic
-from flakydetector.models import InvestigationResult
-
 _SYSTEM_PROMPT = """You are a flaky test investigator. Given evidence from a CI history database, \
 git repository, and source code, explain why the given test is flaky.
 
@@ -207,7 +208,7 @@ def _build_user_prompt(test_name: str, tool_outputs: dict) -> str:
 
 def investigate(
     test_name: str,
-    store: "Store",
+    store: Store,
     repo_path: Path = Path("."),
     fingerprint: str | None = None,
     max_commits: int = 20,
