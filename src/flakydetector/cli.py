@@ -369,5 +369,60 @@ def quarantine(ctx, fmt, output_path, min_runs, include_actions):
     store.close()
 
 
+@main.command()
+@click.argument("test_name")
+@click.option("--fingerprint", default=None, help="Restrict to one failure pattern.")
+@click.option("--repo-path", default=".", type=click.Path(), help="Path to the git repository.")
+@click.option(
+    "--format", "fmt",
+    type=click.Choice(["markdown", "json"]),
+    default="markdown",
+    help="Output format.",
+)
+@click.option("--max-commits", default=20, help="Recent commits to consider.")
+@click.option("--model", default="claude-sonnet-4-6", help="Claude model ID.")
+@click.option("--no-cache", is_flag=True, default=False, help="Force fresh investigation.")
+@click.pass_context
+def investigate(ctx, test_name, fingerprint, repo_path, fmt, max_commits, model, no_cache):
+    """Investigate why a flaky test fails using AI analysis."""
+    import json as _json
+    from flakydetector.investigator import investigate as run_investigation
+
+    store = Store(ctx.obj["db_path"])
+    try:
+        result = run_investigation(
+            test_name=test_name,
+            store=store,
+            repo_path=Path(repo_path),
+            fingerprint=fingerprint,
+            max_commits=max_commits,
+            model=model,
+            use_cache=not no_cache,
+        )
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        store.close()
+        raise SystemExit(1)
+
+    if fmt == "json":
+        click.echo(_json.dumps(result.__dict__, indent=2))
+    else:
+        cached_note = " (cached)" if result.cached else ""
+        click.echo(f"Test: {result.test_name}")
+        click.echo(f"\nCATEGORY ({result.confidence} confidence){cached_note}")
+        click.echo(f"  {result.category}")
+        click.echo("\nEVIDENCE")
+        for e in result.evidence:
+            click.echo(f"  - {e['fact']} [source: {e['source']}]")
+        if result.not_supported:
+            click.echo("\nNOT SUPPORTED BY EVIDENCE")
+            for item in result.not_supported:
+                click.echo(f"  - {item}")
+        click.echo("\nSUGGESTED FIX DIRECTION")
+        click.echo(f"  {result.suggested_fix}")
+
+    store.close()
+
+
 if __name__ == "__main__":
     main()

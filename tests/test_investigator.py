@@ -310,3 +310,69 @@ def test_investigate_returns_cached_result(tmp_path, git_repo):
     mock_client_cls.return_value.messages.create.assert_not_called()
     assert result.category == "race-condition"
     assert result.cached is True
+
+
+# ---------------------------------------------------------------------------
+# CLI tests
+# ---------------------------------------------------------------------------
+
+from click.testing import CliRunner
+from flakydetector.cli import main
+
+
+def test_investigate_cli_markdown_output(tmp_path, git_repo):
+    store = _make_store(tmp_path)
+    _ingest_result(store, "run1", "test_login", TestOutcome.FAILED, fingerprint="fp1")
+    store.close()
+
+    runner = CliRunner()
+    with patch("flakydetector.investigator.anthropic.Anthropic") as mock_client_cls:
+        mock_client_cls.return_value.messages.create.return_value = _mock_claude_response()
+        result = runner.invoke(
+            main,
+            ["--db", str(tmp_path / "test.db"), "investigate", "test_login",
+             "--repo-path", str(git_repo), "--no-cache"],
+        )
+
+    assert result.exit_code == 0
+    assert "CATEGORY" in result.output
+    assert "timing-dependent" in result.output
+    assert "EVIDENCE" in result.output
+    assert "SUGGESTED FIX DIRECTION" in result.output
+
+
+def test_investigate_cli_json_output(tmp_path, git_repo):
+    store = _make_store(tmp_path)
+    _ingest_result(store, "run1", "test_login", TestOutcome.FAILED, fingerprint="fp1")
+    store.close()
+
+    runner = CliRunner()
+    with patch("flakydetector.investigator.anthropic.Anthropic") as mock_client_cls:
+        mock_client_cls.return_value.messages.create.return_value = _mock_claude_response()
+        result = runner.invoke(
+            main,
+            ["--db", str(tmp_path / "test.db"), "investigate", "test_login",
+             "--repo-path", str(git_repo), "--format", "json", "--no-cache"],
+        )
+
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data["category"] == "timing-dependent"
+    assert "evidence" in data
+
+
+def test_investigate_cli_exits_nonzero_on_api_error(tmp_path, git_repo):
+    store = _make_store(tmp_path)
+    _ingest_result(store, "run1", "test_login", TestOutcome.FAILED, fingerprint="fp1")
+    store.close()
+
+    runner = CliRunner()
+    with patch("flakydetector.investigator.anthropic.Anthropic") as mock_client_cls:
+        mock_client_cls.return_value.messages.create.side_effect = Exception("API error")
+        result = runner.invoke(
+            main,
+            ["--db", str(tmp_path / "test.db"), "investigate", "test_login",
+             "--repo-path", str(git_repo), "--no-cache"],
+        )
+
+    assert result.exit_code == 1
