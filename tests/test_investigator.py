@@ -240,3 +240,73 @@ def test_tool_test_source_not_found(git_repo):
 def test_tool_code_under_test_finds_callee(git_repo):
     result = tool_code_under_test("test_login", repo_path=git_repo)
     assert "do_login" in result["callees"]
+
+
+# ---------------------------------------------------------------------------
+# investigate() entry point tests
+# ---------------------------------------------------------------------------
+
+from flakydetector.investigator import investigate
+
+
+def _mock_claude_response(category="timing-dependent", confidence="medium"):
+    mock_content = MagicMock()
+    mock_content.text = json.dumps({
+        "category": category,
+        "confidence": confidence,
+        "evidence": [{"fact": "test took 9s on fail vs 1s on pass", "source": "SQLite"}],
+        "not_supported": ["no external service calls found"],
+        "suggested_fix": "Raise the timeout from 5s to 15s",
+    })
+    mock_response = MagicMock()
+    mock_response.content = [mock_content]
+    return mock_response
+
+
+def _get_head_sha(repo_path):
+    r = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(repo_path), capture_output=True, text=True)
+    return r.stdout.strip()
+
+
+def test_investigate_returns_result(tmp_path, git_repo):
+    store = _make_store(tmp_path)
+    _ingest_result(store, "run1", "test_login", TestOutcome.PASSED, fingerprint="fp1", duration=1.0)
+    _ingest_result(store, "run2", "test_login", TestOutcome.FAILED, fingerprint="fp1", duration=9.0)
+
+    with patch("flakydetector.investigator.anthropic.Anthropic") as mock_client_cls:
+        mock_client_cls.return_value.messages.create.return_value = _mock_claude_response()
+        result = investigate("test_login", store, repo_path=git_repo, use_cache=False)
+
+    assert isinstance(result, InvestigationResult)
+    assert result.category == "timing-dependent"
+    assert result.confidence == "medium"
+    assert result.cached is False
+
+
+def test_investigate_writes_cache(tmp_path, git_repo):
+    store = _make_store(tmp_path)
+    _ingest_result(store, "run1", "test_login", TestOutcome.FAILED, fingerprint="fp1")
+
+    with patch("flakydetector.investigator.anthropic.Anthropic") as mock_client_cls:
+        mock_client_cls.return_value.messages.create.return_value = _mock_claude_response()
+        investigate("test_login", store, repo_path=git_repo, use_cache=True)
+
+    assert mock_client_cls.return_value.messages.create.call_count == 1
+
+
+def test_investigate_returns_cached_result(tmp_path, git_repo):
+    store = _make_store(tmp_path)
+    _ingest_result(store, "run1", "test_login", TestOutcome.FAILED, fingerprint="fp1")
+
+    cached_data = {
+        "category": "race-condition", "confidence": "high",
+        "evidence": [], "not_supported": [], "suggested_fix": "Add a lock",
+    }
+    store.set_cached_investigation("fp1", _get_head_sha(git_repo), cached_data)
+
+    with patch("flakydetector.investigator.anthropic.Anthropic") as mock_client_cls:
+        result = investigate("test_login", store, repo_path=git_repo, use_cache=True)
+
+    mock_client_cls.return_value.messages.create.assert_not_called()
+    assert result.category == "race-condition"
+    assert result.cached is True
